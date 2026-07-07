@@ -108,6 +108,7 @@
   .opts-card{margin-bottom:16px; display:flex; flex-direction:column; gap:12px;}
   .opts-card label{display:flex; align-items:center; gap:10px; font-size:16px;}
   .opts-card input[type=checkbox]{width:20px; height:20px; accent-color:var(--teal); flex-shrink:0;}
+  #opt-voice{flex:1; border:1.5px solid var(--line); border-radius:10px; padding:6px 10px; font-size:15px; background:#fff; color:var(--ink); max-width:280px;}
 
   .bank-list{display:flex; flex-direction:column; gap:12px; margin-bottom:18px;}
   .bank-card{background:#fff;border-radius:16px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 6px 14px var(--shadow); flex-wrap:wrap;}
@@ -219,6 +220,7 @@
       <label><input type="checkbox" id="opt-shuffle" checked> 随机顺序出题 / Shuffle</label>
       <label><input type="checkbox" id="opt-slow"> 慢速朗读 / Slow speech</label>
       <label id="opt-pinyin-row"><input type="checkbox" id="opt-pinyin" checked> 拼音练习行（中文田字格上方加四线格）</label>
+      <label id="opt-voice-row" style="display:none">🔊 Voice: <select id="opt-voice"></select></label>
     </div>
 
     <div id="bank-list" class="bank-list"></div>
@@ -413,6 +415,7 @@
     els.tabCn.classList.toggle('active', mode === 'cn');
     els.tabEn.classList.toggle('active', mode === 'en');
     els.tabMs.classList.toggle('active', mode === 'ms');
+    populateVoiceSelect();
     // 拼音练习行选项只在中文模式下有意义
     els.optPinyinRow.style.display = mode === 'cn' ? '' : 'none';
     renderBankList();
@@ -776,15 +779,45 @@
 
   // ---------- Speech ----------
   let voicesCache = [];
+  const VOICE_KEY = 'dictation_voice_v1';
+  function loadVoicePrefs(){ try{ return JSON.parse(localStorage.getItem(VOICE_KEY)||'{}'); }catch(e){ return {}; } }
+  function saveVoicePref(mode, name){ var p=loadVoicePrefs(); p[mode]=name; localStorage.setItem(VOICE_KEY,JSON.stringify(p)); }
+  function getLangForMode(m){ return m==='cn'?'zh-CN':m==='ms'?'ms-MY':'en-US'; }
+
   function loadVoices(){ voicesCache = window.speechSynthesis ? window.speechSynthesis.getVoices() : []; }
   if('speechSynthesis' in window){
     loadVoices();
-    window.speechSynthesis.onvoiceschanged = loadVoices;
+    window.speechSynthesis.onvoiceschanged = function(){ loadVoices(); populateVoiceSelect(); };
   }
   function pickVoice(lang){
+    var prefs = loadVoicePrefs();
+    var saved = prefs[state.mode];
+    if(saved){
+      var found = voicesCache.find(function(v){ return v.name === saved; });
+      if(found) return found;
+    }
     return voicesCache.find(function(v){ return v.lang === lang; }) ||
            voicesCache.find(function(v){ return v.lang && v.lang.indexOf(lang.slice(0,2)) === 0; }) ||
            null;
+  }
+  function populateVoiceSelect(){
+    var lang   = getLangForMode(state.mode);
+    var voices = voicesCache.filter(function(v){ return v.lang && v.lang.indexOf(lang.slice(0,2)) === 0; });
+    var sel    = document.getElementById('opt-voice');
+    var row    = document.getElementById('opt-voice-row');
+    if(!sel || !row) return;
+    sel.innerHTML = '';
+    if(voices.length <= 1){ row.style.display = 'none'; return; }
+    row.style.display = '';
+    var saved = (loadVoicePrefs())[state.mode] || '';
+    voices.forEach(function(v){
+      var opt = document.createElement('option');
+      opt.value = v.name;
+      opt.textContent = v.name;
+      if(v.name === saved) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    if(!saved && sel.options.length > 0) saveVoicePref(state.mode, sel.options[0].value);
   }
   function speak(text){
     if(!('speechSynthesis' in window)) return;
@@ -1043,6 +1076,9 @@
   els.tabCn.addEventListener('click', function(){ setMode('cn'); });
   els.tabEn.addEventListener('click', function(){ setMode('en'); });
   els.tabMs.addEventListener('click', function(){ setMode('ms'); });
+  document.getElementById('opt-voice').addEventListener('change', function(){
+    saveVoicePref(state.mode, this.value);
+  });
 
   // ---------- Backup / Restore ----------
   document.getElementById('btn-export').addEventListener('click', function(){
