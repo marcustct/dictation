@@ -96,13 +96,13 @@
   button:focus-visible, input:focus-visible, textarea:focus-visible{outline:3px solid var(--yellow); outline-offset:2px;}
 
   /* ---- setup screen ---- */
-  .mode-tabs{display:flex; gap:8px; margin-bottom:16px;}
-  .mode-tab{flex:1; padding:13px 10px; border-radius:14px 14px 5px 5px; background:#dfe9e5; color:var(--ink-soft); font-weight:800; font-family:var(--font-display); font-size:17px; border:2px solid transparent; text-align:center;}
+  .mode-tabs{display:flex; gap:6px; margin-bottom:16px;}
+  .mode-tab{flex:1; padding:11px 6px; border-radius:14px 14px 5px 5px; background:#dfe9e5; color:var(--ink-soft); font-weight:800; font-family:var(--font-display); font-size:15px; border:2px solid transparent; text-align:center;}
   .mode-tab.active{background:#fff; color:var(--ink); box-shadow:0 -3px 0 var(--teal) inset, 0 6px 14px var(--shadow);}
 
-  .opts-card{margin-bottom:16px; display:flex; flex-direction:column; gap:10px;}
-  .opts-card label{display:flex; align-items:center; gap:9px; font-size:14.5px;}
-  .opts-card input[type=checkbox]{width:18px; height:18px; accent-color:var(--teal);}
+  .opts-card{margin-bottom:16px; display:flex; flex-direction:column; gap:12px;}
+  .opts-card label{display:flex; align-items:center; gap:10px; font-size:16px;}
+  .opts-card input[type=checkbox]{width:20px; height:20px; accent-color:var(--teal); flex-shrink:0;}
 
   .bank-list{display:flex; flex-direction:column; gap:12px; margin-bottom:18px;}
   .bank-card{background:#fff;border-radius:16px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 6px 14px var(--shadow); flex-wrap:wrap;}
@@ -140,10 +140,11 @@
   .spiral span{width:14px;height:14px;border-radius:50%;background:var(--paper-deep);box-shadow:inset 0 0 0 3px var(--card), 0 1px 2px rgba(0,0,0,0.15);}
   canvas{width:100%; height:260px; display:block; touch-action:none; border-radius:8px;}
 
-  .reveal-word{text-align:center;font-family:var(--font-display);font-size:26px;color:var(--ink-soft);min-height:54px;margin-top:8px;}
+  .reveal-word{text-align:center;font-family:var(--font-display);font-size:32px;color:var(--ink-soft);min-height:64px;margin-top:8px;}
   .reveal-word.hidden-text{visibility:hidden;}
-  .reveal-word .reveal-pinyin{display:block;font-family:var(--font-body);font-weight:600;font-size:19px;color:var(--teal-dark);letter-spacing:0.5px;margin-bottom:1px;}
-  .reveal-word .reveal-hanzi{display:block;font-size:26px;}
+  .reveal-word.latin-mode{font-family:var(--font-body);font-weight:700;letter-spacing:0.5px;}
+  .reveal-word .reveal-pinyin{display:block;font-family:var(--font-body);font-weight:600;font-size:21px;color:var(--teal-dark);letter-spacing:0.5px;margin-bottom:2px;}
+  .reveal-word .reveal-hanzi{display:block;font-size:32px;}
 
   .controls-row{display:flex;justify-content:center;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap;}
 
@@ -153,16 +154,36 @@
   .review-card{background:#fff;border-radius:16px;padding:12px;box-shadow:0 6px 14px var(--shadow);position:relative;}
   .review-card .idx{position:absolute;top:8px;left:12px;font-family:var(--font-display);color:var(--ink-soft);font-size:14px;}
   .review-card img{width:100%;border-radius:10px;background:var(--paper);border:1px solid var(--line-soft);display:block;margin:4px 0 8px;}
-  .review-word{font-weight:800;font-size:17px;text-align:center;margin:22px 0 8px;}
-  .review-word .review-pinyin{display:block;font-weight:600;font-size:13px;color:var(--teal-dark);letter-spacing:0.5px;margin-top:2px;}
+  .review-word{font-weight:800;font-size:18px;text-align:center;margin:22px 0 8px;}
+  .review-word .review-pinyin{display:block;font-weight:600;font-size:14px;color:var(--teal-dark);letter-spacing:0.5px;margin-top:2px;}
   .stamp{position:absolute;top:2px;right:8px;font-size:28px;transform:rotate(-10deg);display:none;}
   .stamp.correct{color:var(--green);}
   .stamp.wrong{color:var(--coral);}
   .mark-row{display:flex;gap:8px;}
-  .mark-btn{flex:1;padding:9px;border-radius:10px;font-size:13px;font-weight:700;background:#eef3f1;color:var(--ink);}
+  .mark-btn{flex:1;padding:10px;border-radius:10px;font-size:14px;font-weight:700;background:#eef3f1;color:var(--ink);}
   .mark-btn.correct.active{background:var(--green);color:#fff;}
   .mark-btn.wrong.active{background:var(--coral);color:#fff;}
   .review-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+  .btn.green{background:var(--green);color:#fff;box-shadow:0 4px 0 #1e7a3e;}
+  .btn.green:active{box-shadow:0 1px 0 #1e7a3e;}
+
+  /* ---- history screen ---- */
+  .hist-list{display:flex;flex-direction:column;gap:12px;margin-bottom:20px;}
+  .hist-card{background:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 6px 14px var(--shadow);cursor:pointer;}
+  .hist-head{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .hist-mode{font-size:20px;}
+  .hist-meta{flex:1;}
+  .hist-date{font-size:12.5px;color:var(--ink-soft);}
+  .hist-name{font-weight:800;font-size:15px;margin:2px 0;}
+  .hist-score{font-weight:700;font-size:14px;color:var(--ink-soft);}
+  .hist-score.perfect{color:var(--green);}
+  .hist-detail{margin-top:10px;display:none;flex-wrap:wrap;gap:6px;}
+  .hist-card.open .hist-detail{display:flex;}
+  .hist-chip{padding:5px 12px;border-radius:999px;font-size:14px;font-weight:600;}
+  .hist-chip.correct{background:#e8f8ee;color:var(--green);}
+  .hist-chip.wrong{background:#fde8e6;color:var(--coral-dark);}
+  .hist-chip.unmarked{background:#eef3f1;color:var(--ink-soft);}
+  .hist-empty{text-align:center;color:var(--ink-soft);padding:48px 0;font-size:17px;line-height:1.8;}
 
   @media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important;} }
 
@@ -179,23 +200,25 @@
 
   <section id="screen-setup" class="screen active">
     <h1 class="title">听写小助手</h1>
-    <p class="subtitle">用 Apple Pencil 在 iPad 上练习听写,中文、英文都可以。</p>
+    <p class="subtitle">用 Apple Pencil 在 iPad 上练习听写，中文、英文、马来文都可以。</p>
 
     <div class="mode-tabs">
       <button class="mode-tab" id="tab-cn">中文听写</button>
-      <button class="mode-tab" id="tab-en">English Spelling</button>
+      <button class="mode-tab" id="tab-en">English</button>
+      <button class="mode-tab" id="tab-ms">Bahasa M'sia</button>
     </div>
 
     <div class="card opts-card">
-      <label><input type="checkbox" id="opt-shuffle" checked> 随机顺序出题</label>
-      <label><input type="checkbox" id="opt-slow"> 慢速朗读(适合较小的孩子)</label>
-      <label><input type="checkbox" id="opt-pinyin" checked> 拼音练习行(中文田字格上方加四线格)</label>
+      <label><input type="checkbox" id="opt-shuffle" checked> 随机顺序出题 / Shuffle</label>
+      <label><input type="checkbox" id="opt-slow"> 慢速朗读 / Slow speech</label>
+      <label id="opt-pinyin-row"><input type="checkbox" id="opt-pinyin" checked> 拼音练习行（中文田字格上方加四线格）</label>
     </div>
 
     <div id="bank-list" class="bank-list"></div>
 
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
       <button class="btn yellow" id="btn-new-bank">➕ 新建词库</button>
+      <button class="btn secondary" id="btn-history">📚 学习记录</button>
       <button class="btn secondary" id="btn-export">📤 备份词库</button>
       <button class="btn secondary" id="btn-import">📥 还原词库</button>
       <input type="file" id="import-file" accept=".json,application/json" style="display:none">
@@ -232,10 +255,20 @@
     <div class="review-summary" id="review-summary"></div>
     <div class="review-grid" id="review-grid"></div>
     <div class="review-actions no-print">
+      <button class="btn green" id="btn-save-record">💾 保存记录</button>
       <button class="btn" id="btn-restart">🔄 打乱重来</button>
-      <button class="btn secondary" id="btn-print">🖨️ 打印/保存记录</button>
+      <button class="btn secondary" id="btn-print">🖨️ 打印</button>
       <button class="btn secondary" id="btn-home">🏠 返回首页</button>
     </div>
+  </section>
+
+  <section id="screen-history" class="screen">
+    <div class="practice-header" style="margin-bottom:16px;">
+      <button class="btn-icon" id="btn-hist-home" aria-label="返回首页">🏠</button>
+      <h2 style="font-family:var(--font-display);font-size:22px;margin:0;flex:1;text-align:center;">📚 学习记录</h2>
+      <button class="btn-icon warn" id="btn-hist-clear" aria-label="清除所有记录">🗑️</button>
+    </div>
+    <div id="hist-list" class="hist-list"></div>
   </section>
 
   <div class="modal-overlay" id="bank-modal">
@@ -256,12 +289,15 @@
   const els = {
     tabCn: document.getElementById('tab-cn'),
     tabEn: document.getElementById('tab-en'),
+    tabMs: document.getElementById('tab-ms'),
     optShuffle: document.getElementById('opt-shuffle'),
     optSlow: document.getElementById('opt-slow'),
     optPinyin: document.getElementById('opt-pinyin'),
+    optPinyinRow: document.getElementById('opt-pinyin-row'),
     bankList: document.getElementById('bank-list'),
     appVersion: document.getElementById('app-version'),
     btnNewBank: document.getElementById('btn-new-bank'),
+    btnHistory: document.getElementById('btn-history'),
     modalOverlay: document.getElementById('bank-modal'),
     modalTitle: document.getElementById('modal-title'),
     modalName: document.getElementById('modal-name'),
@@ -271,7 +307,8 @@
     screens: {
       setup: document.getElementById('screen-setup'),
       practice: document.getElementById('screen-practice'),
-      review: document.getElementById('screen-review')
+      review: document.getElementById('screen-review'),
+      history: document.getElementById('screen-history')
     },
     practiceTitle: document.getElementById('practice-title'),
     btnExit: document.getElementById('btn-exit'),
@@ -287,8 +324,12 @@
     reviewSummary: document.getElementById('review-summary'),
     reviewGrid: document.getElementById('review-grid'),
     btnRestart: document.getElementById('btn-restart'),
+    btnSaveRecord: document.getElementById('btn-save-record'),
     btnPrint: document.getElementById('btn-print'),
-    btnHome: document.getElementById('btn-home')
+    btnHome: document.getElementById('btn-home'),
+    histList: document.getElementById('hist-list'),
+    btnHistHome: document.getElementById('btn-hist-home'),
+    btnHistClear: document.getElementById('btn-hist-clear')
   };
 
   const COLOR = {
@@ -300,7 +341,7 @@
 
   const state = {
     mode: 'cn',
-    banks: { cn: [], en: [] },
+    banks: { cn: [], en: [], ms: [] },
     editingBankId: null,
     session: null
   };
@@ -308,7 +349,8 @@
   function defaultBanks(){
     return {
       cn: [{ id:'cn-sample', name:'示例词库 · 常用词语', words:['聪明','勇敢','仔细','认真','图书馆','运动会','高兴','难过','安静','热闹'] }],
-      en: [{ id:'en-sample', name:'Sample Bank · Everyday Words', words:['apple','banana','orange','school','teacher','friend','happy','weather','garden','animal'] }]
+      en: [{ id:'en-sample', name:'Sample Bank · Everyday Words', words:['apple','banana','orange','school','teacher','friend','happy','weather','garden','animal'] }],
+      ms: [{ id:'ms-sample', name:'Contoh Bank · Kata Harian', words:['merah','biru','sekolah','murid','guru','buku','rajin','cantik','besar','kecil'] }]
     };
   }
 
@@ -333,7 +375,13 @@
       const raw = localStorage.getItem(STORAGE_KEY);
       if(raw){
         const parsed = JSON.parse(raw);
-        if(parsed && parsed.cn && parsed.en){ state.banks = parsed; return; }
+        if(parsed && parsed.cn && parsed.en){
+          // 迁移：旧版本没有 ms，补上示例词库
+          if(!parsed.ms) parsed.ms = defaultBanks().ms;
+          state.banks = parsed;
+          saveBanks();
+          return;
+        }
       }
     }catch(e){ /* 数据损坏或无法读取,回退到默认词库 */ }
     state.banks = defaultBanks();
@@ -349,6 +397,9 @@
     state.mode = mode;
     els.tabCn.classList.toggle('active', mode === 'cn');
     els.tabEn.classList.toggle('active', mode === 'en');
+    els.tabMs.classList.toggle('active', mode === 'ms');
+    // 拼音练习行选项只在中文模式下有意义
+    els.optPinyinRow.style.display = mode === 'cn' ? '' : 'none';
     renderBankList();
   }
 
@@ -358,7 +409,7 @@
     if(list.length === 0){
       const empty = document.createElement('p');
       empty.className = 'subtitle';
-      empty.textContent = '还没有词库,点击下方"新建词库"开始吧!';
+      empty.textContent = state.mode === 'cn' ? '还没有词库，点击下方"新建词库"开始吧！' : 'No word banks yet. Tap "新建词库" below to create one.';
       els.bankList.appendChild(empty);
       return;
     }
@@ -368,7 +419,7 @@
       card.innerHTML =
         '<div class="bank-info">' +
           '<div class="name">' + escapeHtml(bank.name) + '</div>' +
-          '<div class="count">' + bank.words.length + ' 个' + (state.mode === 'cn' ? '词语' : '单词') + '</div>' +
+          '<div class="count">' + bank.words.length + (state.mode === 'cn' ? ' 个词语' : state.mode === 'ms' ? ' perkataan' : ' words') + '</div>' +
         '</div>' +
         '<div class="bank-actions">' +
           '<button class="start">▶️ 开始</button>' +
@@ -447,6 +498,7 @@
     state.session = {
       mode: state.mode,
       pinyin: els.optPinyin.checked,
+      bankId: bank.id,
       bankName: bank.name,
       words: words,
       current: 0,
@@ -489,7 +541,9 @@
 
   function loadQuestion(index){
     const word = state.session.words[index];
-    if(state.session.mode === 'cn'){
+    const isCn = state.session.mode === 'cn';
+    els.revealWord.classList.toggle('latin-mode', !isCn);
+    if(isCn){
       const py = getPinyin(word);
       els.revealWord.innerHTML =
         (py ? '<span class="reveal-pinyin">' + escapeHtml(py) + '</span>' : '') +
@@ -603,19 +657,62 @@
     const cssW = canvas.width / dpr, cssH = canvas.height / dpr;
     const word = state.session.words[state.session.current];
     drawGrid(word, cssW, cssH);
-    strokes.forEach(function(stroke){
-      for(let i = 1; i < stroke.length; i++){ drawSegment(stroke[i - 1], stroke[i]); }
-    });
+    strokes.forEach(drawSmoothStroke);
   }
 
-  function drawSegment(a, b){
-    ctx.beginPath();
-    ctx.moveTo(a.x, a.y);
-    ctx.lineTo(b.x, b.y);
-    ctx.lineWidth = 2.4 + (b.p || 0.5) * 4;
-    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    ctx.strokeStyle = COLOR.ink;
-    ctx.stroke();
+  // ---- 笔迹渲染:二次贝塞尔平滑(中/英/马来文共用) ----
+  function strokeWidth(p){ return 2.4 + ((p && p.p) || 0.5) * 4; }
+  function mid(a, b){ return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
+  function inkStart(w){
+    ctx.lineWidth = w; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = COLOR.ink;
+  }
+  function inkLine(ax, ay, bx, by, w){
+    inkStart(w); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+  }
+  function inkQuad(ax, ay, cx, cy, bx, by, w){
+    inkStart(w); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.quadraticCurveTo(cx, cy, bx, by); ctx.stroke();
+  }
+  function inkDot(p){
+    ctx.beginPath(); ctx.arc(p.x, p.y, strokeWidth(p) / 2, 0, Math.PI * 2);
+    ctx.fillStyle = COLOR.ink; ctx.fill();
+  }
+
+  // 实时:每来一个新点,画出到该点为止新增的那一段平滑曲线
+  function drawStrokeIncrement(s){
+    const n = s.length;
+    if(n === 2){
+      const m = mid(s[0], s[1]);
+      inkLine(s[0].x, s[0].y, m.x, m.y, strokeWidth(s[1]));
+    } else if(n >= 3){
+      const p1 = s[n - 2], p2 = s[n - 1];
+      const m1 = mid(s[n - 3], p1), m2 = mid(p1, p2);
+      inkQuad(m1.x, m1.y, p1.x, p1.y, m2.x, m2.y, strokeWidth(p2));
+    }
+  }
+  // 抬笔:补画最后一小段到真正的终点(单点则画一个圆点)
+  function finishStrokeDraw(s){
+    if(!s) return;
+    const n = s.length;
+    if(n === 1){ inkDot(s[0]); }
+    else if(n >= 2){
+      const m = mid(s[n - 2], s[n - 1]);
+      inkLine(m.x, m.y, s[n - 1].x, s[n - 1].y, strokeWidth(s[n - 1]));
+    }
+  }
+  // 整条重绘(撤销、旋转后使用),与实时绘制保持一致的形状
+  function drawSmoothStroke(s){
+    const n = s.length;
+    if(n === 0) return;
+    if(n === 1){ inkDot(s[0]); return; }
+    const m01 = mid(s[0], s[1]);
+    inkLine(s[0].x, s[0].y, m01.x, m01.y, strokeWidth(s[1]));
+    for(let i = 2; i < n; i++){
+      const p1 = s[i - 1];
+      const m1 = mid(s[i - 2], p1), m2 = mid(p1, s[i]);
+      inkQuad(m1.x, m1.y, p1.x, p1.y, m2.x, m2.y, strokeWidth(s[i]));
+    }
+    const mL = mid(s[n - 2], s[n - 1]);
+    inkLine(mL.x, mL.y, s[n - 1].x, s[n - 1].y, strokeWidth(s[n - 1]));
   }
 
   function getPos(e){
@@ -643,15 +740,14 @@
     const points = (typeof e.getCoalescedEvents === 'function') ? e.getCoalescedEvents() : null;
     const list = (points && points.length) ? points : [e];
     for(let k = 0; k < list.length; k++){
-      const pos = getPos(list[k]);
-      const prev = currentStroke[currentStroke.length - 1];
-      currentStroke.push(pos);
-      drawSegment(prev, pos);
+      currentStroke.push(getPos(list[k]));
+      drawStrokeIncrement(currentStroke);
     }
     e.preventDefault();
   });
   function endStroke(e){
     if(e.pointerId !== activePointerId) return;
+    finishStrokeDraw(currentStroke);   // 补画最后一小段,笔画收尾完整
     isDrawing = false; activePointerId = null; currentStroke = null;
   }
   els.canvas.addEventListener('pointerup', endStroke);
@@ -678,7 +774,7 @@
   function speak(text){
     if(!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
-    const lang = state.session.mode === 'cn' ? 'zh-CN' : 'en-US';
+    const lang = state.session.mode === 'cn' ? 'zh-CN' : state.session.mode === 'ms' ? 'ms-MY' : 'en-US';
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = lang;
     const v = pickVoice(lang);
@@ -762,11 +858,94 @@
       : ('已批改 ' + marked.length + ' / ' + results.length + ' 题 · 点击图片下方按钮继续批改');
   }
 
+  // ---------- Study History ----------
+  const HISTORY_KEY = 'dictation_history_v1';
+  function loadHistory(){
+    try{ const r = localStorage.getItem(HISTORY_KEY); return r ? JSON.parse(r) : []; }
+    catch(e){ return []; }
+  }
+  function saveHistory(history){
+    try{ localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); }catch(e){}
+  }
+  function appendSessionToHistory(){
+    const s = state.session;
+    if(!s) return;
+    const history = loadHistory();
+    history.unshift({
+      id: uid(),
+      date: new Date().toISOString(),
+      mode: s.mode,
+      bankName: s.bankName,
+      results: s.results.map(function(r){ return { word: r.word, marked: r.marked }; })
+    });
+    if(history.length > 200) history.length = 200;
+    saveHistory(history);
+  }
+  function modeLabel(m){ return m === 'cn' ? '🇨🇳 中文' : m === 'ms' ? '🇲🇾 马来文' : '🇬🇧 English'; }
+  function renderHistory(){
+    const history = loadHistory();
+    els.histList.innerHTML = '';
+    if(!history.length){
+      const div = document.createElement('div');
+      div.className = 'hist-empty';
+      div.innerHTML = '还没有保存过任何学习记录。<br>批改完成后点击「保存记录」即可。';
+      els.histList.appendChild(div);
+      return;
+    }
+    history.forEach(function(entry){
+      const total = entry.results.length;
+      const correct = entry.results.filter(function(r){ return r.marked === true; }).length;
+      const marked = entry.results.filter(function(r){ return r.marked !== null; }).length;
+      const d = new Date(entry.date);
+      const dateStr = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') +
+        '  ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+      const card = document.createElement('div');
+      card.className = 'hist-card';
+      const scoreClass = (marked === total && correct === total) ? 'hist-score perfect' : 'hist-score';
+      const scoreText = marked === total
+        ? '正确 ' + correct + ' / ' + total + (correct === total ? ' 🌟' : '')
+        : '已批改 ' + marked + ' / ' + total;
+      card.innerHTML =
+        '<div class="hist-head">' +
+          '<span class="hist-mode">' + modeLabel(entry.mode) + '</span>' +
+          '<div class="hist-meta">' +
+            '<div class="hist-date">' + escapeHtml(dateStr) + '</div>' +
+            '<div class="hist-name">' + escapeHtml(entry.bankName) + '</div>' +
+          '</div>' +
+          '<span class="' + scoreClass + '">' + scoreText + '</span>' +
+        '</div>' +
+        '<div class="hist-detail">' +
+          entry.results.map(function(r){
+            const cls = r.marked === true ? 'correct' : r.marked === false ? 'wrong' : 'unmarked';
+            const mark = r.marked === true ? ' ✓' : r.marked === false ? ' ✗' : '';
+            return '<span class="hist-chip ' + cls + '">' + escapeHtml(r.word) + mark + '</span>';
+          }).join('') +
+        '</div>';
+      card.addEventListener('click', function(){ card.classList.toggle('open'); });
+      els.histList.appendChild(card);
+    });
+  }
+  els.btnSaveRecord.addEventListener('click', function(){
+    appendSessionToHistory();
+    alert('✅ 记录已保存！可在首页「📚 学习记录」查看。');
+  });
+  els.btnHistory.addEventListener('click', function(){
+    renderHistory();
+    showScreen('history');
+  });
+  els.btnHistHome.addEventListener('click', function(){ showScreen('setup'); });
+  els.btnHistClear.addEventListener('click', function(){
+    if(!confirm('确定要清除全部学习记录吗？此操作无法还原。')) return;
+    saveHistory([]);
+    renderHistory();
+  });
+
   els.btnRestart.addEventListener('click', function(){
     const words = shuffled(state.session.words);
     state.session = {
       mode: state.session.mode,
       pinyin: state.session.pinyin,
+      bankId: state.session.bankId,
       bankName: state.session.bankName,
       words: words,
       current: 0,
@@ -786,6 +965,7 @@
   els.modalCancel.addEventListener('click', closeBankEditor);
   els.tabCn.addEventListener('click', function(){ setMode('cn'); });
   els.tabEn.addEventListener('click', function(){ setMode('en'); });
+  els.tabMs.addEventListener('click', function(){ setMode('ms'); });
 
   // ---------- Backup / Restore ----------
   document.getElementById('btn-export').addEventListener('click', function(){
@@ -809,10 +989,11 @@
       try{
         const parsed = JSON.parse(reader.result);
         if(!parsed || !Array.isArray(parsed.cn) || !Array.isArray(parsed.en)){
-          alert('文件格式不正确,请选择之前用"备份词库"导出的 JSON 文件。');
+          alert('文件格式不正确，请选择之前用"备份词库"导出的 JSON 文件。');
           return;
         }
-        if(!confirm('还原将覆盖当前所有词库,确定继续吗?')) return;
+        if(!confirm('还原将覆盖当前所有词库，确定继续吗？')) return;
+        if(!parsed.ms) parsed.ms = [];
         state.banks = parsed;
         saveBanks();
         renderBankList();
@@ -859,7 +1040,7 @@
   window.addEventListener('orientationchange', function(){ scheduleViewportChange(300); });
 
   // 应用版本号(同时更新 version.txt / sw.js 的 CACHE)
-  const APP_VERSION = '0.4';
+  const APP_VERSION = '0.5';
   els.appVersion.textContent = '版本 v' + APP_VERSION;
 
   loadBanks();

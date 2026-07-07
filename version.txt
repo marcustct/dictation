@@ -1,3 +1,15 @@
+Version: 0.5
+Date: 2026-07-07
+Notes: - Malay (Bahasa Malaysia) mode: 3rd tab, ms-MY speech, four-line
+         writing grid (same as English), sample word bank, storage migration.
+       - Study history: save a session after review, browse past records
+         (date / mode / bank / score / per-word result) from home screen.
+       - Split review actions: separate 💾 Save Record and 🖨️ Print buttons.
+       - Larger hint text on all pages; 3 tabs fit neatly.
+       - English/Malay reveal word uses upright body font (not cartoon).
+       - Bézier stroke smoothing (all modes) + coalesced events + desynchronized
+         canvas from v0.4 now applied to English and Malay too (shared path).
+
 Version: 0.4
 Date: 2026-07-07
 Notes: - Smoother pen writing: use PointerEvent.getCoalescedEvents() to capture
