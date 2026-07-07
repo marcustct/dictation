@@ -194,9 +194,10 @@
 
   @media print{
     @page{ margin:12mm; }
-    body *{ visibility:hidden; }
-    #screen-review, #screen-review *{ visibility:visible; }
-    #screen-review{ position:absolute; left:0; top:0; width:100%; }
+    html,body{ height:auto !important; overflow:visible !important; }
+    body{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .screen{ display:none !important; }
+    #screen-review{ display:block !important; position:static !important; max-width:100% !important; padding:0 !important; }
     .no-print{ display:none !important; }
   }
 </style>
@@ -979,7 +980,44 @@
     renderDots();
     loadQuestion(0);
   });
-  els.btnPrint.addEventListener('click', function(){ window.print(); });
+  els.btnPrint.addEventListener('click', function(){
+    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if(isIOS){ openIOSPrintWindow(); } else { window.print(); }
+  });
+  function openIOSPrintWindow(){
+    var summaryEl = document.getElementById('review-summary');
+    var gridEl    = document.getElementById('review-grid');
+    var css =
+      'body{font-family:Arial,Helvetica,sans-serif;padding:16px;color:#1F3A5F;}' +
+      'h1{font-size:22px;margin:0 0 4px;}' +
+      '.sub{margin:0 0 16px;color:#5A7690;font-size:13px;}' +
+      '.review-summary{background:#f5f9f7;border:1px solid #dce8e4;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-weight:700;text-align:center;font-size:15px;}' +
+      '.review-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px;}' +
+      '.review-card{border:1px solid #ccc;border-radius:8px;padding:10px;position:relative;background:#fff;}' +
+      '.idx{font-size:12px;color:#5A7690;margin-bottom:2px;}' +
+      '.review-word{font-weight:800;font-size:16px;text-align:center;margin:4px 0 8px;}' +
+      '.review-word .review-pinyin{display:block;font-size:12px;color:#1F6B76;font-weight:600;margin-top:2px;}' +
+      'img{width:100%;border-radius:6px;border:1px solid #ddd;display:block;margin-bottom:6px;}' +
+      '.mark-row{display:none !important;}' +
+      '.stamp{position:absolute;top:4px;right:8px;font-size:26px;transform:rotate(-10deg);}' +
+      '.stamp.correct{color:#2F9E55;}.stamp.wrong{color:#F2685B;}' +
+      '.hint{text-align:center;color:#999;font-size:13px;margin-top:24px;border-top:1px solid #eee;padding-top:12px;}' +
+      '@media print{.hint{display:none;}}';
+    var body =
+      '<h1>批改时间</h1>' +
+      '<p class="sub">听写小助手 · Dictation Buddy</p>' +
+      '<div class="review-summary">' + summaryEl.innerHTML + '</div>' +
+      '<div class="review-grid">' + gridEl.innerHTML + '</div>' +
+      '<p class="hint">点右上角「分享」按钮 → 选择「打印」即可打印 ↗️</p>';
+    var w = window.open('', '_blank', 'noopener');
+    if(!w){ alert('请允许弹出窗口，或使用右上角「分享 → 打印」功能直接打印本页。'); return; }
+    w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+      '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+      '<title>批改时间 · 听写小助手</title>' +
+      '<style>' + css + '</style></head><body>' + body + '</body></html>');
+    w.document.close();
+  }
   els.btnHome.addEventListener('click', function(){ showScreen('setup'); });
 
   // ---------- Modal & mode wiring ----------
