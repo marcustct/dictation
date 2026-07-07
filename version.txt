@@ -1,0 +1,7 @@
+Version: 0.1
+Date: 2026-07-07
+Notes: Initial Claude Code project setup. Imported working prototype
+       (single self-contained index.html) from Claude chat handoff.
+       Features: Chinese/English dictation, Apple Pencil canvas handwriting,
+       palm rejection, speech synthesis, word-bank CRUD, backup/restore,
+       parent review & print.

@@ -1,0 +1,18 @@
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+
+# Editor / IDE
+.vscode/
+.idea/
+
+# Local scratch & temp
+*.log
+tmp/
+scratch/
+
+# Word-bank backups exported by the app (user data, keep out of repo)
+dictation-wordbanks-*.json
