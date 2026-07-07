@@ -220,7 +220,7 @@
       <label><input type="checkbox" id="opt-shuffle" checked> 随机顺序出题 / Shuffle</label>
       <label><input type="checkbox" id="opt-slow"> 慢速朗读 / Slow speech</label>
       <label id="opt-pinyin-row"><input type="checkbox" id="opt-pinyin" checked> 拼音练习行（中文田字格上方加四线格）</label>
-      <label id="opt-voice-row" style="display:none">🔊 Voice: <select id="opt-voice"></select></label>
+      <label id="opt-voice-row" style="display:none">🔊 Voice: <select id="opt-voice"></select> <button type="button" id="btn-voice-diag" style="font-size:13px;padding:4px 8px;border-radius:8px;border:1px solid var(--line);background:#f5f5f5;color:var(--ink-soft);cursor:pointer;">🔍</button></label>
     </div>
 
     <div id="bank-list" class="bank-list"></div>
@@ -816,7 +816,14 @@
     var row    = document.getElementById('opt-voice-row');
     if(!sel || !row) return;
     sel.innerHTML = '';
-    if(voices.length === 0){ row.style.display = 'none'; return; }
+    // Always show the row so the 🔍 diagnostic button is accessible
+    row.style.display = '';
+    if(voices.length === 0){
+      var opt = document.createElement('option');
+      opt.textContent = '(no matching voices found)';
+      sel.appendChild(opt);
+      return;
+    }
     row.style.display = '';
     var saved = (loadVoicePrefs())[state.mode] || '';
     voices.forEach(function(v){
@@ -1087,6 +1094,11 @@
   els.tabMs.addEventListener('click', function(){ setMode('ms'); });
   document.getElementById('opt-voice').addEventListener('change', function(){
     saveVoicePref(state.mode, this.value);
+  });
+  document.getElementById('btn-voice-diag').addEventListener('click', function(){
+    loadVoices();
+    var lines = voicesCache.map(function(v,i){ return (i+1)+'. '+v.name+' ['+v.lang+']'; });
+    alert('All voices ('+voicesCache.length+'):\n\n' + (lines.join('\n') || '(none loaded yet)'));
   });
 
   // ---------- Backup / Restore ----------
