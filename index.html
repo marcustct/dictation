@@ -32,6 +32,16 @@
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;height:100%;}
   body{
+    -webkit-user-select:none;
+    user-select:none;
+    -webkit-touch-callout:none;
+    touch-action:manipulation;
+  }
+  input, textarea{
+    -webkit-user-select:text;
+    user-select:text;
+  }
+  body{
     min-height:100%;
     display:flex;
     flex-direction:column;
@@ -113,7 +123,7 @@
   .dot.current{background:var(--yellow);border-color:var(--yellow-dark);transform:scale(1.3);}
   .dot.done{background:var(--teal);border-color:var(--teal-dark);}
 
-  .paper-wrap{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;}
+  .paper-wrap{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;touch-action:none;}
   .paper{
     position:relative;background:var(--paper);
     border-radius:14px; box-shadow:0 14px 30px var(--shadow);
@@ -444,6 +454,13 @@
   }
 
   let ctx, strokes = [], activePointerId = null, isDrawing = false, currentStroke = null, dpr = 1;
+  let penDetected = false;   // 一旦检测到 Apple Pencil,画布将忽略手指/手掌触摸
+
+  function shouldRejectPointer(e){
+    if(e.pointerType === 'pen'){ penDetected = true; return false; }
+    if(e.pointerType === 'touch' && penDetected) return true;   // 手掌/手指防误触
+    return false;
+  }
 
   function loadQuestion(index){
     const word = state.session.words[index];
@@ -542,13 +559,18 @@
   }
 
   els.canvas.addEventListener('pointerdown', function(e){
-    if(activePointerId !== null && e.pointerType === 'touch') return;
+    e.preventDefault();
+    if(shouldRejectPointer(e)) return;
+    // Pencil 落笔时,若手掌已抢先开始了一条 touch 笔画,立即中止并让位给 Pencil
+    if(e.pointerType === 'pen' && isDrawing && activePointerId !== null){
+      isDrawing = false; activePointerId = null; currentStroke = null;
+    }
+    if(activePointerId !== null) return;
     activePointerId = e.pointerId;
     try{ els.canvas.setPointerCapture(e.pointerId); }catch(err){}
     isDrawing = true;
     currentStroke = [getPos(e)];
     strokes.push(currentStroke);
-    e.preventDefault();
   });
   els.canvas.addEventListener('pointermove', function(e){
     if(!isDrawing || e.pointerId !== activePointerId) return;
@@ -727,6 +749,16 @@
     };
     reader.readAsText(file);
     e.target.value = '';
+  });
+
+  // 练习页面上阻止手掌触摸引发的滚动、选择与长按高亮
+  ['touchstart','touchmove'].forEach(function(evt){
+    document.addEventListener(evt, function(e){
+      if(els.screens.practice.classList.contains('active')){
+        // 保留按钮点击,其余触摸一律拦截
+        if(!e.target.closest('button')) e.preventDefault();
+      }
+    }, { passive:false });
   });
 
   for(let i = 0; i < 9; i++){ els.spiral.appendChild(document.createElement('span')); }
