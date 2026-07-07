@@ -1,6 +1,6 @@
 # Dictation Buddy / 听写小助手
 
-**Version:** 0.2 &nbsp;·&nbsp; **Date:** 2026-07-07
+**Version:** 0.3 &nbsp;·&nbsp; **Date:** 2026-07-07
 
 A web-based dictation (听写) practice tool for children using **iPad + Apple Pencil** in Safari — no native app, no build step, no dependencies. The whole app is a single self-contained `index.html`.
 
@@ -15,6 +15,7 @@ A web-based dictation (听写) practice tool for children using **iPad + Apple P
 - Word-bank management: create / edit / delete banks; backup & restore to a JSON file.
 - Handwriting on a pressure-sensitive canvas with田字格 (Chinese) or four-line (English) guides.
 - **Pinyin practice row** (optional): a 四线三格 pinyin grid above each Chinese character so the child writes the pinyin from listening too.
+- **Pinyin hint**: the reveal (eye) button and the review cards show the 汉语拼音 with tone marks (generated offline via bundled `pinyin-pro`).
 - Speech synthesis reads each word aloud; slow-speed option for younger kids.
 - Palm rejection so a resting hand doesn't draw once the Pencil is used.
 - Parent review screen: mark each answer correct / needs-work, then print or save.
@@ -25,6 +26,7 @@ A web-based dictation (听写) practice tool for children using **iPad + Apple P
 - 词库管理：新建 / 编辑 / 删除词库；可备份、还原为 JSON 文件。
 - 在压感画布上手写，中文显示田字格、英文显示四线格。
 - **拼音练习行**（可选）：在每个中文田字格上方加四线三格，让孩子听音把拼音也写出来一起练。
+- **拼音提示**：点「眼睛」按钮的提示和批改卡片都会显示带声调的汉语拼音（离线内置 `pinyin-pro` 生成）。
 - 语音合成朗读每个词，支持慢速朗读（适合较小的孩子）。
 - 防误触：使用 Apple Pencil 后，手掌触摸不会画上去。
 - 家长批改页：逐题标记正确 / 待加强，可打印或保存记录。
@@ -79,6 +81,7 @@ Word banks are stored in the browser's `localStorage` (key `dictation_wordbanks_
 ```
 Dictation Practice/
 ├── index.html              <- the app UI + logic
+├── pinyin-pro.min.js       <- bundled pinyin library (offline, vendored)
 ├── manifest.webmanifest    <- PWA metadata (name, icons, colors)
 ├── sw.js                   <- service worker (offline caching)
 ├── icons/                  <- app icons (192 / 512 / maskable / apple-touch)

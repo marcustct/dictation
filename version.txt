@@ -1,3 +1,12 @@
+Version: 0.3
+Date: 2026-07-07
+Notes: - Rotation fix: writing is no longer lost when the iPad rotates
+         (portrait <-> landscape). Strokes are kept and rescaled to the new
+         canvas size instead of being cleared; also listens to orientationchange.
+       - Pinyin hint: the reveal (eye button) and the review cards now show
+         the 汉语拼音 with tone marks, generated offline via bundled pinyin-pro.
+       - Thicker ink: handwriting line width increased (2.4 + pressure*4).
+
 Version: 0.2
 Date: 2026-07-07
 Notes: - Pinyin practice row: Chinese 田字格 now has a four-line (四线三格)

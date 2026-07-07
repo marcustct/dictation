@@ -139,8 +139,10 @@
   .spiral span{width:14px;height:14px;border-radius:50%;background:var(--paper-deep);box-shadow:inset 0 0 0 3px var(--card), 0 1px 2px rgba(0,0,0,0.15);}
   canvas{width:100%; height:260px; display:block; touch-action:none; border-radius:8px;}
 
-  .reveal-word{text-align:center;font-family:var(--font-display);font-size:26px;color:var(--ink-soft);min-height:36px;margin-top:8px;}
+  .reveal-word{text-align:center;font-family:var(--font-display);font-size:26px;color:var(--ink-soft);min-height:54px;margin-top:8px;}
   .reveal-word.hidden-text{visibility:hidden;}
+  .reveal-word .reveal-pinyin{display:block;font-size:18px;color:var(--teal-dark);letter-spacing:1px;margin-bottom:1px;}
+  .reveal-word .reveal-hanzi{display:block;font-size:26px;}
 
   .controls-row{display:flex;justify-content:center;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap;}
 
@@ -151,6 +153,7 @@
   .review-card .idx{position:absolute;top:8px;left:12px;font-family:var(--font-display);color:var(--ink-soft);font-size:14px;}
   .review-card img{width:100%;border-radius:10px;background:var(--paper);border:1px solid var(--line-soft);display:block;margin:4px 0 8px;}
   .review-word{font-weight:800;font-size:17px;text-align:center;margin:22px 0 8px;}
+  .review-word .review-pinyin{display:block;font-weight:600;font-size:13px;color:var(--teal-dark);letter-spacing:0.5px;margin-top:2px;}
   .stamp{position:absolute;top:2px;right:8px;font-size:28px;transform:rotate(-10deg);display:none;}
   .stamp.correct{color:var(--green);}
   .stamp.wrong{color:var(--coral);}
@@ -244,6 +247,7 @@
     </div>
   </div>
 
+<script src="pinyin-pro.min.js"></script>
 <script>
 (function(){
   const els = {
@@ -305,6 +309,13 @@
   }
 
   function uid(){ return 'b' + Date.now() + Math.floor(Math.random()*1000); }
+
+  // 用 pinyin-pro 生成带声调的汉语拼音;库未加载时安全返回空串
+  function getPinyin(text){
+    if(typeof pinyinPro === 'undefined' || !pinyinPro.pinyin) return '';
+    try{ return pinyinPro.pinyin(text, { toneType: 'symbol', type: 'string' }); }
+    catch(e){ return ''; }
+  }
 
   function escapeHtml(s){
     return String(s).replace(/[&<>"']/g, function(c){
@@ -463,6 +474,7 @@
   }
 
   let ctx, strokes = [], activePointerId = null, isDrawing = false, currentStroke = null, dpr = 1;
+  let curCssW = 0, curCssH = 0;   // 当前画布 CSS 尺寸,旋转时用于缩放已写笔迹
   let penDetected = false;   // 一旦检测到 Apple Pencil,画布将忽略手指/手掌触摸
 
   function shouldRejectPointer(e){
@@ -473,7 +485,14 @@
 
   function loadQuestion(index){
     const word = state.session.words[index];
-    els.revealWord.textContent = word;
+    if(state.session.mode === 'cn'){
+      const py = getPinyin(word);
+      els.revealWord.innerHTML =
+        (py ? '<span class="reveal-pinyin">' + escapeHtml(py) + '</span>' : '') +
+        '<span class="reveal-hanzi">' + escapeHtml(word) + '</span>';
+    } else {
+      els.revealWord.textContent = word;
+    }
     els.revealWord.classList.add('hidden-text');
     strokes = [];
     setupCanvas(word);
@@ -498,6 +517,7 @@
     canvas.height = Math.round(cssH * dpr);
     ctx = canvas.getContext('2d');
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    curCssW = cssW; curCssH = cssH;
     drawGrid(word, cssW, cssH);
   }
 
@@ -588,7 +608,7 @@
     ctx.beginPath();
     ctx.moveTo(a.x, a.y);
     ctx.lineTo(b.x, b.y);
-    ctx.lineWidth = 1.5 + (b.p || 0.5) * 3.5;
+    ctx.lineWidth = 2.4 + (b.p || 0.5) * 4;
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     ctx.strokeStyle = COLOR.ink;
     ctx.stroke();
@@ -694,10 +714,13 @@
     results.forEach(function(r, i){
       const card = document.createElement('div');
       card.className = 'review-card';
+      const rpy = state.session.mode === 'cn' ? getPinyin(r.word) : '';
       card.innerHTML =
         '<div class="idx">#' + (i + 1) + '</div>' +
         '<div class="stamp"></div>' +
-        '<div class="review-word">' + escapeHtml(r.word) + '</div>' +
+        '<div class="review-word">' + escapeHtml(r.word) +
+          (rpy ? '<span class="review-pinyin">' + escapeHtml(rpy) + '</span>' : '') +
+        '</div>' +
         '<img src="' + (r.image || '') + '" alt="孩子写的 ' + escapeHtml(r.word) + '">' +
         '<div class="mark-row no-print">' +
           '<button class="mark-btn correct">✓ 正确</button>' +
@@ -805,16 +828,26 @@
 
   for(let i = 0; i < 9; i++){ els.spiral.appendChild(document.createElement('span')); }
 
+  // 屏幕尺寸/方向变化时,保留已写笔迹并按新旧画布尺寸缩放,避免旋转后写的字消失
+  function handleViewportChange(){
+    if(!(els.screens.practice.classList.contains('active') && state.session)) return;
+    const oldW = curCssW, oldH = curCssH;
+    setupCanvas(state.session.words[state.session.current]);   // 会更新 curCssW/curCssH
+    if(oldW && oldH && (oldW !== curCssW || oldH !== curCssH)){
+      const sx = curCssW / oldW, sy = curCssH / oldH;
+      strokes.forEach(function(st){
+        st.forEach(function(pt){ pt.x *= sx; pt.y *= sy; });
+      });
+    }
+    redrawAll();
+  }
   let resizeTimer;
-  window.addEventListener('resize', function(){
+  function scheduleViewportChange(delay){
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(function(){
-      if(els.screens.practice.classList.contains('active') && state.session){
-        strokes = [];
-        setupCanvas(state.session.words[state.session.current]);
-      }
-    }, 250);
-  });
+    resizeTimer = setTimeout(handleViewportChange, delay);
+  }
+  window.addEventListener('resize', function(){ scheduleViewportChange(250); });
+  window.addEventListener('orientationchange', function(){ scheduleViewportChange(300); });
 
   loadBanks();
   setMode('cn');
