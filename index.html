@@ -154,6 +154,7 @@
   .controls-row{display:flex;justify-content:center;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap;}
 
   /* ---- review screen ---- */
+  .review-datetime{text-align:center;color:var(--ink-soft);font-size:13px;margin:-6px 0 12px;letter-spacing:0.3px;}
   .review-summary{background:#fff;border-radius:16px;padding:14px 18px;margin-bottom:16px;box-shadow:0 6px 14px var(--shadow);font-weight:700;text-align:center;}
   .review-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;margin-bottom:20px;}
   .review-card{background:#fff;border-radius:16px;padding:12px;box-shadow:0 6px 14px var(--shadow);position:relative;}
@@ -258,6 +259,7 @@
   <section id="screen-review" class="screen">
     <h1 class="title">批改时间</h1>
     <p class="subtitle">家长可以点选下方按钮,批改孩子这次写的每一题。</p>
+    <div id="review-datetime" class="review-datetime"></div>
     <div class="review-summary" id="review-summary"></div>
     <div class="review-grid" id="review-grid"></div>
     <div class="review-actions no-print">
@@ -827,6 +829,10 @@
     renderReview();
   }
   function renderReview(){
+    const now = new Date();
+    const dtStr = now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日  ' +
+      now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+    document.getElementById('review-datetime').textContent = dtStr;
     const results = state.session.results;
     els.reviewGrid.innerHTML = '';
     results.forEach(function(r, i){
@@ -986,12 +992,15 @@
     if(isIOS){ openIOSPrintWindow(); } else { window.print(); }
   });
   function openIOSPrintWindow(){
-    var summaryEl = document.getElementById('review-summary');
-    var gridEl    = document.getElementById('review-grid');
+    var summaryEl  = document.getElementById('review-summary');
+    var gridEl     = document.getElementById('review-grid');
+    var datetimeEl = document.getElementById('review-datetime');
+    var dateStr    = datetimeEl ? datetimeEl.textContent : '';
     var css =
       'body{font-family:Arial,Helvetica,sans-serif;padding:16px;color:#1F3A5F;}' +
-      'h1{font-size:22px;margin:0 0 4px;}' +
-      '.sub{margin:0 0 16px;color:#5A7690;font-size:13px;}' +
+      'h1{font-size:22px;margin:0 0 2px;}' +
+      '.dt{text-align:left;color:#5A7690;font-size:13px;margin:0 0 4px;}' +
+      '.sub{margin:0 0 14px;color:#5A7690;font-size:12px;}' +
       '.review-summary{background:#f5f9f7;border:1px solid #dce8e4;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-weight:700;text-align:center;font-size:15px;}' +
       '.review-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px;}' +
       '.review-card{border:1px solid #ccc;border-radius:8px;padding:10px;position:relative;background:#fff;}' +
@@ -1006,17 +1015,24 @@
       '@media print{.hint{display:none;}}';
     var body =
       '<h1>批改时间</h1>' +
+      (dateStr ? '<p class="dt">' + dateStr + '</p>' : '') +
       '<p class="sub">听写小助手 · Dictation Buddy</p>' +
       '<div class="review-summary">' + summaryEl.innerHTML + '</div>' +
       '<div class="review-grid">' + gridEl.innerHTML + '</div>' +
       '<p class="hint">点右上角「分享」按钮 → 选择「打印」即可打印 ↗️</p>';
-    var w = window.open('', '_blank', 'noopener');
-    if(!w){ alert('请允许弹出窗口，或使用右上角「分享 → 打印」功能直接打印本页。'); return; }
-    w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+    var fullHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
       '<meta name="viewport" content="width=device-width,initial-scale=1">' +
       '<title>批改时间 · 听写小助手</title>' +
-      '<style>' + css + '</style></head><body>' + body + '</body></html>');
-    w.document.close();
+      '<style>' + css + '</style></head><body>' + body + '</body></html>';
+    try{
+      var blob = new Blob([fullHtml], {type:'text/html;charset=utf-8'});
+      var url  = URL.createObjectURL(blob);
+      var w    = window.open(url, '_blank');
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
+      if(!w){ alert('请允许弹出窗口，或使用右上角「分享 → 打印」功能直接打印本页。'); }
+    } catch(e){
+      alert('请使用右上角「分享 → 打印」功能直接打印本页。');
+    }
   }
   els.btnHome.addEventListener('click', function(){ showScreen('setup'); });
 
