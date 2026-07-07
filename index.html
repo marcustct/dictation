@@ -70,6 +70,7 @@
 
   h1.title{font-family:var(--font-display); font-size:32px; margin:2px 0 2px; color:var(--ink); letter-spacing:0.3px;}
   .subtitle{color:var(--ink-soft); margin:0 0 20px; font-size:14.5px; line-height:1.5;}
+  .app-version{margin-top:20px; text-align:center; color:var(--ink-soft); font-size:12.5px; opacity:0.75;}
 
   .card{background:var(--card); border-radius:var(--radius); box-shadow:0 10px 24px var(--shadow); padding:16px 18px;}
 
@@ -141,7 +142,7 @@
 
   .reveal-word{text-align:center;font-family:var(--font-display);font-size:26px;color:var(--ink-soft);min-height:54px;margin-top:8px;}
   .reveal-word.hidden-text{visibility:hidden;}
-  .reveal-word .reveal-pinyin{display:block;font-size:18px;color:var(--teal-dark);letter-spacing:1px;margin-bottom:1px;}
+  .reveal-word .reveal-pinyin{display:block;font-family:var(--font-body);font-weight:600;font-size:19px;color:var(--teal-dark);letter-spacing:0.5px;margin-bottom:1px;}
   .reveal-word .reveal-hanzi{display:block;font-size:26px;}
 
   .controls-row{display:flex;justify-content:center;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap;}
@@ -199,6 +200,8 @@
       <button class="btn secondary" id="btn-import">📥 还原词库</button>
       <input type="file" id="import-file" accept=".json,application/json" style="display:none">
     </div>
+
+    <div class="app-version" id="app-version"></div>
   </section>
 
   <section id="screen-practice" class="screen">
@@ -257,6 +260,7 @@
     optSlow: document.getElementById('opt-slow'),
     optPinyin: document.getElementById('opt-pinyin'),
     bankList: document.getElementById('bank-list'),
+    appVersion: document.getElementById('app-version'),
     btnNewBank: document.getElementById('btn-new-bank'),
     modalOverlay: document.getElementById('bank-modal'),
     modalTitle: document.getElementById('modal-title'),
@@ -515,7 +519,7 @@
     canvas.style.height = cssH + 'px';
     canvas.width = Math.round(cssW * dpr);
     canvas.height = Math.round(cssH * dpr);
-    ctx = canvas.getContext('2d');
+    ctx = canvas.getContext('2d', { desynchronized: true });
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     curCssW = cssW; curCssH = cssH;
     drawGrid(word, cssW, cssH);
@@ -635,10 +639,15 @@
   });
   els.canvas.addEventListener('pointermove', function(e){
     if(!isDrawing || e.pointerId !== activePointerId) return;
-    const pos = getPos(e);
-    const prev = currentStroke[currentStroke.length - 1];
-    currentStroke.push(pos);
-    drawSegment(prev, pos);
+    // Safari 会把 Apple Pencil 的高频移动合并成一次事件;取回全部中间点,笔画才连续不断
+    const points = (typeof e.getCoalescedEvents === 'function') ? e.getCoalescedEvents() : null;
+    const list = (points && points.length) ? points : [e];
+    for(let k = 0; k < list.length; k++){
+      const pos = getPos(list[k]);
+      const prev = currentStroke[currentStroke.length - 1];
+      currentStroke.push(pos);
+      drawSegment(prev, pos);
+    }
     e.preventDefault();
   });
   function endStroke(e){
@@ -848,6 +857,10 @@
   }
   window.addEventListener('resize', function(){ scheduleViewportChange(250); });
   window.addEventListener('orientationchange', function(){ scheduleViewportChange(300); });
+
+  // 应用版本号(同时更新 version.txt / sw.js 的 CACHE)
+  const APP_VERSION = '0.4';
+  els.appVersion.textContent = '版本 v' + APP_VERSION;
 
   loadBanks();
   setMode('cn');

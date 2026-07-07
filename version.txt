@@ -1,3 +1,11 @@
+Version: 0.4
+Date: 2026-07-07
+Notes: - Smoother pen writing: use PointerEvent.getCoalescedEvents() to capture
+         all sub-points Safari merges, and a low-latency (desynchronized) canvas
+         context, so Apple Pencil strokes no longer look broken/choppy.
+       - Pinyin hint now uses a clean upright font instead of the cartoon display font.
+       - Home screen shows the version number (from APP_VERSION const).
+
 Version: 0.3
 Date: 2026-07-07
 Notes: - Rotation fix: writing is no longer lost when the iPad rotates

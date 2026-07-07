@@ -1,6 +1,6 @@
 # Dictation Buddy / 听写小助手
 
-**Version:** 0.3 &nbsp;·&nbsp; **Date:** 2026-07-07
+**Version:** 0.4 &nbsp;·&nbsp; **Date:** 2026-07-07
 
 A web-based dictation (听写) practice tool for children using **iPad + Apple Pencil** in Safari — no native app, no build step, no dependencies. The whole app is a single self-contained `index.html`.
 
