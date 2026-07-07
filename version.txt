@@ -1,7 +1,13 @@
+Version: 0.2
+Date: 2026-07-07
+Notes: - Pinyin practice row: Chinese 田字格 now has a four-line (四线三格)
+         pinyin grid above each character so the child writes pinyin too.
+         Toggle "拼音练习行" on the setup screen (default on). Correct pinyin
+         is intentionally NOT shown — child writes from listening, parent checks.
+       - PWA: added manifest.webmanifest, service worker (sw.js) for true
+         offline use, and app icons. Installable via "Add to Home Screen".
+
 Version: 0.1
 Date: 2026-07-07
 Notes: Initial Claude Code project setup. Imported working prototype
        (single self-contained index.html) from Claude chat handoff.
-       Features: Chinese/English dictation, Apple Pencil canvas handwriting,
-       palm rejection, speech synthesis, word-bank CRUD, backup/restore,
-       parent review & print.

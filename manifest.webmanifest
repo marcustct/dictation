@@ -1,0 +1,17 @@
+{
+  "name": "听写小助手 · Dictation Buddy",
+  "short_name": "听写小助手",
+  "description": "为孩子设计的中英文听写练习工具，支持 Apple Pencil 手写、拼音练习行与家长批改。A dictation practice tool for kids with Apple Pencil handwriting, pinyin practice rows and parent review.",
+  "lang": "zh-CN",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#E7EFEA",
+  "theme_color": "#2C8C99",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

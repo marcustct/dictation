@@ -4,8 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="听写小助手">
 <meta name="color-scheme" content="light">
+<meta name="theme-color" content="#2C8C99">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
 <title>听写小助手 · Dictation Buddy</title>
 <style>
   :root{
@@ -179,6 +185,7 @@
     <div class="card opts-card">
       <label><input type="checkbox" id="opt-shuffle" checked> 随机顺序出题</label>
       <label><input type="checkbox" id="opt-slow"> 慢速朗读(适合较小的孩子)</label>
+      <label><input type="checkbox" id="opt-pinyin" checked> 拼音练习行(中文田字格上方加四线格)</label>
     </div>
 
     <div id="bank-list" class="bank-list"></div>
@@ -244,6 +251,7 @@
     tabEn: document.getElementById('tab-en'),
     optShuffle: document.getElementById('opt-shuffle'),
     optSlow: document.getElementById('opt-slow'),
+    optPinyin: document.getElementById('opt-pinyin'),
     bankList: document.getElementById('bank-list'),
     btnNewBank: document.getElementById('btn-new-bank'),
     modalOverlay: document.getElementById('bank-modal'),
@@ -423,6 +431,7 @@
     const words = els.optShuffle.checked ? shuffled(bank.words) : bank.words.slice();
     state.session = {
       mode: state.mode,
+      pinyin: els.optPinyin.checked,
       bankName: bank.name,
       words: words,
       current: 0,
@@ -482,13 +491,51 @@
     const rect = canvas.getBoundingClientRect();
     dpr = window.devicePixelRatio || 1;
     const cssW = rect.width || canvas.parentElement.clientWidth;
-    const cssH = 260;
+    const usePinyin = state.session.mode === 'cn' && state.session.pinyin;
+    const cssH = usePinyin ? 300 : 260;
     canvas.style.height = cssH + 'px';
     canvas.width = Math.round(cssW * dpr);
     canvas.height = Math.round(cssH * dpr);
     ctx = canvas.getContext('2d');
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     drawGrid(word, cssW, cssH);
+  }
+
+  // 田字格：方框 + 虚线十字辅助线
+  function drawCharBox(x, y, size){
+    ctx.setLineDash([]);
+    ctx.strokeStyle = COLOR.line;
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(x, y, size, size);
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = COLOR.lineSoft;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(x + size / 2, y); ctx.lineTo(x + size / 2, y + size);
+    ctx.moveTo(x, y + size / 2); ctx.lineTo(x + size, y + size / 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // 拼音四线三格：四条横线分出三格,第三条为书写基线;两侧加淡竖线框住
+  function drawPinyinGrid(x, y, w, hh){
+    const rowH = hh / 3;
+    for(let k = 0; k <= 3; k++){
+      const ly = y + k * rowH;
+      const outer = (k === 0 || k === 3);
+      const baseline = (k === 2);
+      ctx.setLineDash(baseline || outer ? [] : [4, 4]);
+      ctx.strokeStyle = baseline ? COLOR.line : COLOR.lineSoft;
+      ctx.lineWidth = baseline ? 1.5 : 1.1;
+      ctx.beginPath(); ctx.moveTo(x, ly); ctx.lineTo(x + w, ly); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    ctx.strokeStyle = COLOR.lineSoft;
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    ctx.moveTo(x, y); ctx.lineTo(x, y + hh);
+    ctx.moveTo(x + w, y); ctx.lineTo(x + w, y + hh);
+    ctx.stroke();
   }
 
   function drawGrid(word, w, h){
@@ -498,21 +545,15 @@
       const boxSize = Math.max(56, Math.min(150, (w - 32) / n));
       const totalW = boxSize * n;
       const startX = (w - totalW) / 2;
-      const startY = (h - boxSize) / 2;
+      const usePinyin = !!state.session.pinyin;
+      const pinyinH = usePinyin ? boxSize * 0.55 : 0;
+      const gap = usePinyin ? 8 : 0;
+      const columnH = pinyinH + gap + boxSize;
+      const startY = Math.max(6, (h - columnH) / 2);
       for(let i = 0; i < n; i++){
         const x = startX + i * boxSize;
-        ctx.setLineDash([]);
-        ctx.strokeStyle = COLOR.line;
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(x, startY, boxSize, boxSize);
-        ctx.setLineDash([4, 4]);
-        ctx.strokeStyle = COLOR.lineSoft;
-        ctx.lineWidth = 1.2;
-        ctx.beginPath();
-        ctx.moveTo(x + boxSize / 2, startY); ctx.lineTo(x + boxSize / 2, startY + boxSize);
-        ctx.moveTo(x, startY + boxSize / 2); ctx.lineTo(x + boxSize, startY + boxSize / 2);
-        ctx.stroke();
-        ctx.setLineDash([]);
+        if(usePinyin) drawPinyinGrid(x, startY, boxSize, pinyinH);
+        drawCharBox(x, startY + pinyinH + gap, boxSize);
       }
     } else {
       const marginX = 32;
@@ -693,6 +734,7 @@
     const words = shuffled(state.session.words);
     state.session = {
       mode: state.session.mode,
+      pinyin: state.session.pinyin,
       bankName: state.session.bankName,
       words: words,
       current: 0,
@@ -777,6 +819,16 @@
   loadBanks();
   setMode('cn');
 })();
+</script>
+<script>
+  // 注册 Service Worker,实现离线可用(添加到主屏幕后无网也能打开)
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('sw.js').catch(function(err){
+        console.warn('Service Worker 注册失败', err);
+      });
+    });
+  }
 </script>
 </body>
 </html>
