@@ -789,6 +789,16 @@
     loadVoices();
     window.speechSynthesis.onvoiceschanged = function(){ loadVoices(); populateVoiceSelect(); };
   }
+  function voicePrefixes(mode){
+    if(mode === 'cn') return ['zh', 'cmn'];  // iOS Premium voices use cmn-Hans-CN
+    if(mode === 'ms') return ['ms', 'id'];
+    return ['en'];
+  }
+  function matchesMode(v, mode){
+    if(!v.lang) return false;
+    var vl = v.lang.toLowerCase();
+    return voicePrefixes(mode).some(function(p){ return vl.indexOf(p) === 0; });
+  }
   function pickVoice(lang){
     var prefs = loadVoicePrefs();
     var saved = prefs[state.mode];
@@ -797,17 +807,16 @@
       if(found) return found;
     }
     return voicesCache.find(function(v){ return v.lang === lang; }) ||
-           voicesCache.find(function(v){ return v.lang && v.lang.indexOf(lang.slice(0,2)) === 0; }) ||
+           voicesCache.find(function(v){ return matchesMode(v, state.mode); }) ||
            null;
   }
   function populateVoiceSelect(){
-    var lang   = getLangForMode(state.mode);
-    var voices = voicesCache.filter(function(v){ return v.lang && v.lang.indexOf(lang.slice(0,2)) === 0; });
+    var voices = voicesCache.filter(function(v){ return matchesMode(v, state.mode); });
     var sel    = document.getElementById('opt-voice');
     var row    = document.getElementById('opt-voice-row');
     if(!sel || !row) return;
     sel.innerHTML = '';
-    if(voices.length <= 1){ row.style.display = 'none'; return; }
+    if(voices.length === 0){ row.style.display = 'none'; return; }
     row.style.display = '';
     var saved = (loadVoicePrefs())[state.mode] || '';
     voices.forEach(function(v){
