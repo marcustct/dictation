@@ -71,6 +71,10 @@
   h1.title{font-family:var(--font-display); font-size:32px; margin:2px 0 2px; color:var(--ink); letter-spacing:0.3px;}
   .subtitle{color:var(--ink-soft); margin:0 0 20px; font-size:14.5px; line-height:1.5;}
   .app-version{margin-top:20px; text-align:center; color:var(--ink-soft); font-size:12.5px; opacity:0.75;}
+  .sync-badge{display:inline-block;margin-left:8px;font-size:12px;vertical-align:middle;transition:color .3s;}
+  .sync-badge.synced{color:var(--green);}
+  .sync-badge.syncing{color:var(--yellow-dark);}
+  .sync-badge.offline{color:var(--ink-soft);}
 
   .card{background:var(--card); border-radius:var(--radius); box-shadow:0 10px 24px var(--shadow); padding:16px 18px;}
 
@@ -283,6 +287,12 @@
     </div>
   </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"
+        integrity="sha384-sEVIly94UBRLKWdkYoPpSG7GD/e79YHMrxVyZaOk712Ga7+EAw6w1EFi+xBzBdd+"
+        crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"
+        integrity="sha384-M481iNZJtbpypKgvlvZ+78Giq0BsewFLk5r2k+MOcGXlwKCc27DQRZ+WCV/zpmpC"
+        crossorigin="anonymous"></script>
 <script src="pinyin-pro.min.js"></script>
 <script>
 (function(){
@@ -389,7 +399,8 @@
   }
   function saveBanks(){
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.banks)); }
-    catch(e){ console.error('保存词库失败', e); alert('词库保存失败:浏览器可能处于无痕模式或存储空间已满。'); }
+    catch(e){ console.error('保存词库失败', e); alert('词库保存失败：浏览器可能处于无痕模式或存储空间已满。'); }
+    pushBanksToCloud();   // 同步到 Firestore（db 未就绪时为空操作）
   }
 
   // ---------- Setup screen ----------
@@ -870,20 +881,31 @@
   function appendSessionToHistory(){
     const s = state.session;
     if(!s) return;
-    const history = loadHistory();
-    history.unshift({
+    const entry = {
       id: uid(),
       date: new Date().toISOString(),
       mode: s.mode,
       bankName: s.bankName,
       results: s.results.map(function(r){ return { word: r.word, marked: r.marked }; })
-    });
+    };
+    const history = loadHistory();
+    history.unshift(entry);
     if(history.length > 200) history.length = 200;
     saveHistory(history);
+    saveSessionToCloud(entry);   // 同步到 Firestore
   }
   function modeLabel(m){ return m === 'cn' ? '🇨🇳 中文' : m === 'ms' ? '🇲🇾 马来文' : '🇬🇧 English'; }
   function renderHistory(){
-    const history = loadHistory();
+    els.histList.innerHTML = '<p class="subtitle" style="text-align:center;padding:20px 0">加载中…</p>';
+    loadHistoryFromCloud(function(cloudRecords){
+      const history = cloudRecords !== null ? cloudRecords : loadHistory();
+      // 用云端记录刷新本地缓存
+      if(cloudRecords !== null) saveHistory(cloudRecords);
+      _renderHistoryList(history);
+    });
+  }
+
+  function _renderHistoryList(history){
     els.histList.innerHTML = '';
     if(!history.length){
       const div = document.createElement('div');
@@ -937,7 +959,7 @@
   els.btnHistClear.addEventListener('click', function(){
     if(!confirm('确定要清除全部学习记录吗？此操作无法还原。')) return;
     saveHistory([]);
-    renderHistory();
+    clearHistoryFromCloud(function(){ renderHistory(); });
   });
 
   els.btnRestart.addEventListener('click', function(){
@@ -1041,10 +1063,119 @@
 
   // 应用版本号(同时更新 version.txt / sw.js 的 CACHE)
   const APP_VERSION = '0.5';
-  els.appVersion.textContent = '版本 v' + APP_VERSION;
+  els.appVersion.innerHTML = '版本 v' + APP_VERSION +
+    '&nbsp;&nbsp;<span id="sync-status" class="sync-badge offline">📴 本地模式</span>';
+
+  // ============================================================
+  // Firebase Firestore 云端同步
+  // 离线时自动降级为纯 localStorage 模式,不影响正常使用
+  // ============================================================
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyAevxjT1xNHmXIDUQk8V4ZX0r2GxuZVH8M",
+    authDomain: "dictationdb.firebaseapp.com",
+    projectId: "dictationdb",
+    storageBucket: "dictationdb.firebasestorage.app",
+    messagingSenderId: "676161076844",
+    appId: "1:676161076844:web:4557ca281f9b092c5f6249"
+  };
+
+  let db = null;
+  let banksUnsub = null;   // onSnapshot 取消订阅函数
+
+  function syncStatus(state){
+    const el = document.getElementById('sync-status');
+    if(!el) return;
+    if(state === 'synced')  { el.textContent = '☁️ 已同步';  el.className = 'sync-badge synced';  }
+    else if(state === 'syncing'){ el.textContent = '🔄 同步中…'; el.className = 'sync-badge syncing'; }
+    else                    { el.textContent = '📴 本地模式'; el.className = 'sync-badge offline'; }
+  }
+
+  function pushBanksToCloud(){
+    if(!db) return;
+    syncStatus('syncing');
+    db.collection('wordbanks').doc('main').set({
+      cn: state.banks.cn,
+      en: state.banks.en,
+      ms: state.banks.ms,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(function(){ syncStatus('synced'); })
+      .catch(function(e){ console.warn('Firestore write:', e); syncStatus('offline'); });
+  }
+
+  function startBanksListener(){
+    if(!db) return;
+    if(banksUnsub) banksUnsub();
+    syncStatus('syncing');
+    banksUnsub = db.collection('wordbanks').doc('main').onSnapshot(
+      function(snap){
+        if(!snap.exists){ pushBanksToCloud(); return; }
+        const remote = snap.data();
+        // 用远端数据更新本地(最后写入者优先)
+        if(Array.isArray(remote.cn)) state.banks.cn = remote.cn;
+        if(Array.isArray(remote.en)) state.banks.en = remote.en;
+        if(Array.isArray(remote.ms)) state.banks.ms = remote.ms;
+        try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.banks)); }catch(e){}
+        renderBankList();
+        syncStatus('synced');
+      },
+      function(err){ console.warn('Firestore listen:', err); syncStatus('offline'); }
+    );
+  }
+
+  function saveSessionToCloud(entry){
+    if(!db) return;
+    db.collection('history').add({
+      date: entry.date,
+      mode: entry.mode,
+      bankName: entry.bankName,
+      results: entry.results,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(function(e){ console.warn('History sync:', e); });
+  }
+
+  function loadHistoryFromCloud(callback){
+    if(!db){ callback(null); return; }
+    db.collection('history')
+      .orderBy('createdAt', 'desc')
+      .limit(200)
+      .get()
+      .then(function(snap){
+        callback(snap.docs.map(function(d){
+          const rec = d.data();
+          rec.id = d.id;
+          // Firestore Timestamp → ISO string
+          if(rec.createdAt && rec.createdAt.toDate) rec.date = rec.date || rec.createdAt.toDate().toISOString();
+          return rec;
+        }));
+      })
+      .catch(function(e){ console.warn('History load:', e); callback(null); });
+  }
+
+  function clearHistoryFromCloud(done){
+    if(!db){ done(); return; }
+    db.collection('history').get()
+      .then(function(snap){
+        if(snap.empty){ done(); return; }
+        const batch = db.batch();
+        snap.docs.forEach(function(d){ batch.delete(d.ref); });
+        return batch.commit();
+      })
+      .then(done)
+      .catch(function(e){ console.warn('History clear:', e); done(); });
+  }
+
+  function initFirebase(){
+    if(typeof firebase === 'undefined'){ syncStatus('offline'); return; }
+    try{
+      if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+      db = firebase.firestore();
+      startBanksListener();
+    }catch(e){ console.warn('Firebase init:', e); syncStatus('offline'); }
+  }
 
   loadBanks();
   setMode('cn');
+  initFirebase();
 })();
 </script>
 <script>

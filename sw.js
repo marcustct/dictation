@@ -1,6 +1,6 @@
 /* Dictation Buddy service worker — offline app shell.
    Bump CACHE on every release so clients pick up the new files. */
-const CACHE = 'dictation-v0.5';
+const CACHE = 'dictation-v0.6';
 const ASSETS = [
   './',
   './index.html',
