@@ -739,11 +739,23 @@
   let ctx, strokes = [], activePointerId = null, isDrawing = false, currentStroke = null, dpr = 1;
   let curCssW = 0, curCssH = 0;   // 当前画布 CSS 尺寸,旋转时用于缩放已写笔迹
   let penDetected = false;   // 一旦检测到 Apple Pencil,画布将忽略手指/手掌触摸
+  let activeTouchIds = new Set(); // 追踪所有活跃 touch pointer，笔落下时统一释放
 
   function shouldRejectPointer(e){
     if(e.pointerType === 'pen'){ penDetected = true; return false; }
-    if(e.pointerType === 'touch' && penDetected) return true;   // 手掌/手指防误触
+    if(e.pointerType === 'touch'){
+      if(penDetected) return true;
+      // 手掌接触面积远大于手指：width 或 height > 30px 判定为手掌，直接拒绝
+      if((e.width || 0) > 30 || (e.height || 0) > 30) return true;
+    }
     return false;
+  }
+
+  function releaseAllTouches(){
+    activeTouchIds.forEach(function(id){
+      try{ els.canvas.releasePointerCapture(id); }catch(err){}
+    });
+    activeTouchIds.clear();
   }
 
   function loadQuestion(index){
@@ -929,10 +941,18 @@
 
   els.canvas.addEventListener('pointerdown', function(e){
     e.preventDefault();
-    if(shouldRejectPointer(e)) return;
-    // Pencil 落笔时,若手掌已抢先开始了一条 touch 笔画,立即中止并让位给 Pencil
-    if(e.pointerType === 'pen' && isDrawing && activePointerId !== null){
-      isDrawing = false; activePointerId = null; currentStroke = null;
+    if(shouldRejectPointer(e)){
+      // 被拒绝的 touch（手掌）：立即释放 capture，不让它干扰笔
+      try{ els.canvas.releasePointerCapture(e.pointerId); }catch(err){}
+      return;
+    }
+    if(e.pointerType === 'touch') activeTouchIds.add(e.pointerId);
+    // 笔落下时：释放所有已捕获的 touch，清除手掌笔画，让笔接管
+    if(e.pointerType === 'pen'){
+      releaseAllTouches();
+      if(activePointerId !== null){
+        isDrawing = false; activePointerId = null; currentStroke = null;
+      }
     }
     if(activePointerId !== null) return;
     activePointerId = e.pointerId;
@@ -953,6 +973,7 @@
     e.preventDefault();
   });
   function endStroke(e){
+    if(e.pointerType === 'touch') activeTouchIds.delete(e.pointerId);
     if(e.pointerId !== activePointerId) return;
     finishStrokeDraw(currentStroke);   // 补画最后一小段,笔画收尾完整
     isDrawing = false; activePointerId = null; currentStroke = null;
