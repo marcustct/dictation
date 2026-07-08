@@ -70,9 +70,9 @@
   .screen{display:none; flex:1; flex-direction:column; padding:22px 16px 40px; max-width:760px; margin:0 auto; width:100%;}
   .screen.active{display:flex;}
 
-  h1.title{font-family:var(--font-display); font-size:32px; margin:2px 0 2px; color:var(--ink); letter-spacing:0.3px;}
-  .subtitle{color:var(--ink-soft); margin:0 0 20px; font-size:14.5px; line-height:1.5;}
-  .app-version{margin-top:20px; text-align:center; color:var(--ink-soft); font-size:12.5px; opacity:0.75;}
+  h1.title{font-family:var(--font-display); font-size:36px; margin:2px 0 2px; color:var(--ink); letter-spacing:0.3px;}
+  .subtitle{color:var(--ink-soft); margin:0 0 20px; font-size:16px; line-height:1.5;}
+  .app-version{margin-top:20px; text-align:center; color:var(--ink-soft); font-size:13px; opacity:0.75;}
   .sync-badge{display:inline-block;margin-left:8px;font-size:12px;vertical-align:middle;transition:color .3s;}
   .sync-badge.synced{color:var(--green);}
   .sync-badge.syncing{color:var(--yellow-dark);}
@@ -103,20 +103,20 @@
 
   /* ---- setup screen ---- */
   .mode-tabs{display:flex; gap:6px; margin-bottom:16px;}
-  .mode-tab{flex:1; padding:11px 6px; border-radius:14px 14px 5px 5px; background:#dfe9e5; color:var(--ink-soft); font-weight:800; font-family:var(--font-display); font-size:15px; border:2px solid transparent; text-align:center;}
+  .mode-tab{flex:1; padding:12px 6px; border-radius:14px 14px 5px 5px; background:#dfe9e5; color:var(--ink-soft); font-weight:800; font-family:var(--font-display); font-size:17px; border:2px solid transparent; text-align:center;}
   .mode-tab.active{background:#fff; color:var(--ink); box-shadow:0 -3px 0 var(--teal) inset, 0 6px 14px var(--shadow);}
 
   .opts-card{margin-bottom:16px; display:flex; flex-direction:column; gap:12px;}
-  .opts-card label{display:flex; align-items:center; gap:10px; font-size:16px;}
-  .opts-card input[type=checkbox]{width:20px; height:20px; accent-color:var(--teal); flex-shrink:0;}
-  #opt-voice{flex:1; border:1.5px solid var(--line); border-radius:10px; padding:6px 10px; font-size:15px; background:#fff; color:var(--ink); max-width:280px;}
+  .opts-card label{display:flex; align-items:center; gap:10px; font-size:18px;}
+  .opts-card input[type=checkbox]{width:22px; height:22px; accent-color:var(--teal); flex-shrink:0;}
+  #opt-voice{flex:1; border:1.5px solid var(--line); border-radius:10px; padding:7px 10px; font-size:16px; background:#fff; color:var(--ink); max-width:300px;}
 
   .bank-list{display:flex; flex-direction:column; gap:12px; margin-bottom:18px;}
   .bank-card{background:#fff;border-radius:16px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 6px 14px var(--shadow); flex-wrap:wrap;}
-  .bank-info .name{font-weight:800;font-size:16px;}
-  .bank-info .count{color:var(--ink-soft);font-size:12.5px;margin-top:2px;}
+  .bank-info .name{font-weight:800;font-size:18px;}
+  .bank-info .count{color:var(--ink-soft);font-size:14px;margin-top:2px;}
   .bank-actions{display:flex; gap:6px; flex-wrap:wrap;}
-  .bank-actions button{padding:9px 12px;border-radius:10px;font-size:13px;background:#eef3f1;color:var(--ink);font-weight:700;}
+  .bank-actions button{padding:10px 14px;border-radius:10px;font-size:15px;background:#eef3f1;color:var(--ink);font-weight:700;}
   .bank-actions button.start{background:var(--teal);color:#fff;}
   .bank-actions button.preview{background:var(--yellow);color:#fff;}
   .bank-actions button.danger{background:#fde4e1;color:var(--coral-dark);}
