@@ -133,10 +133,6 @@
   /* flashcard mode */
   .study-list.flashcard-mode .study-pinyin{filter:blur(5px);cursor:pointer;transition:filter 0.2s;user-select:none;-webkit-user-select:none;}
   .study-list.flashcard-mode .study-card.revealed .study-pinyin{filter:none;}
-  /* text import area */
-  .btn-import-toggle{width:100%;text-align:left;background:none;border:2px dashed var(--line-soft);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--ink-soft);cursor:pointer;font-family:var(--font-display);}
-  .btn-import-toggle:hover{border-color:var(--teal);color:var(--teal);}
-  .import-area{width:100%;border:2px solid var(--line-soft);border-radius:12px;padding:10px 12px;font-size:14px;font-family:inherit;min-height:90px;resize:vertical;box-sizing:border-box;}
   .study-speak{width:46px;height:46px;border-radius:50%;background:var(--teal);color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:none;cursor:pointer;transition:background 0.15s;}
   .study-speak:active{background:var(--teal-dark);}
 
@@ -334,13 +330,6 @@
       <h3 id="modal-title">新建词库</h3>
       <input type="text" id="modal-name" placeholder="词库名称,例如:三年级 第五课">
       <textarea id="modal-words" placeholder="每行输入一个词语,或用逗号分隔&#10;例如:&#10;苹果&#10;香蕉&#10;图书馆"></textarea>
-      <div id="text-import-wrap" style="margin-bottom:6px;">
-        <button type="button" id="btn-show-import" class="btn-import-toggle">📋 从课文/词单导入</button>
-        <div id="text-import-panel" style="display:none;margin-top:8px;">
-          <textarea id="text-import-area" class="import-area" placeholder="粘贴一段课文或词单，自动提取词语添加到词库..."></textarea>
-          <button type="button" class="btn secondary" id="btn-parse-import" style="width:100%;margin-top:6px;">🔍 提取词语 →</button>
-        </div>
-      </div>
       <div class="modal-actions">
         <button class="btn secondary" id="modal-cancel">取消</button>
         <button class="btn" id="modal-save">保存</button>
@@ -649,21 +638,6 @@
     });
   }
 
-  function parseWordsFromText(text, mode){
-    // Split by punctuation and whitespace; keep only sensible-length tokens
-    var parts = text.split(/[\s\d,，。、；;：:\.?？!！\n\r《》【】「」『』（）()\-—…]+/);
-    var words = [];
-    var seen = {};
-    var maxLen = (mode === 'en') ? 30 : 6;
-    parts.forEach(function(p){
-      p = p.trim();
-      if(!p || seen[p] || p.length > maxLen) return;
-      seen[p] = true;
-      words.push(p);
-    });
-    return words;
-  }
-
   function openBankEditor(bankId){
     state.editingBankId = bankId;
     if(bankId){
@@ -676,10 +650,6 @@
       els.modalName.value = '';
       els.modalWords.value = '';
     }
-    // reset import panel
-    document.getElementById('text-import-panel').style.display = 'none';
-    document.getElementById('text-import-area').value = '';
-    document.getElementById('btn-show-import').textContent = '📋 从课文/词单导入';
     els.modalOverlay.classList.add('active');
     setTimeout(function(){ els.modalName.focus(); }, 50);
   }
@@ -1326,24 +1296,6 @@
   els.modalSave.addEventListener('click', saveBankEditor);
   els.modalCancel.addEventListener('click', closeBankEditor);
 
-  document.getElementById('btn-show-import').addEventListener('click', function(){
-    var panel = document.getElementById('text-import-panel');
-    var open = panel.style.display === 'none';
-    panel.style.display = open ? 'block' : 'none';
-    this.textContent = open ? '▲ 收起导入' : '📋 从课文/词单导入';
-  });
-
-  document.getElementById('btn-parse-import').addEventListener('click', function(){
-    var raw = document.getElementById('text-import-area').value;
-    var words = parseWordsFromText(raw, state.mode);
-    if(words.length === 0){ alert('未能提取到词语，请检查输入内容'); return; }
-    var existing = els.modalWords.value.trim();
-    els.modalWords.value = (existing ? existing + '\n' : '') + words.join('\n');
-    document.getElementById('text-import-panel').style.display = 'none';
-    document.getElementById('text-import-area').value = '';
-    document.getElementById('btn-show-import').textContent = '📋 从课文/词单导入';
-    els.modalWords.scrollTop = els.modalWords.scrollHeight;
-  });
   els.tabCn.addEventListener('click', function(){ setMode('cn'); });
   els.tabEn.addEventListener('click', function(){ setMode('en'); });
   els.tabMs.addEventListener('click', function(){ setMode('ms'); });
