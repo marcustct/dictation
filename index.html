@@ -220,20 +220,27 @@
       <label><input type="checkbox" id="opt-shuffle" checked> 随机顺序出题 / Shuffle</label>
       <label><input type="checkbox" id="opt-slow"> 慢速朗读 / Slow speech</label>
       <label id="opt-pinyin-row"><input type="checkbox" id="opt-pinyin" checked> 拼音练习行（中文田字格上方加四线格）</label>
-      <label id="opt-voice-row" style="display:none">🔊 Voice: <select id="opt-voice"></select> <button type="button" id="btn-voice-diag" style="font-size:13px;padding:4px 8px;border-radius:8px;border:1px solid var(--line);background:#f5f5f5;color:var(--ink-soft);cursor:pointer;">🔍</button></label>
+      <label id="opt-voice-row" style="display:none">🔊 Voice: <select id="opt-voice"></select></label>
     </div>
 
     <div id="bank-list" class="bank-list"></div>
 
-    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+    <div id="admin-btn-row" style="display:none; gap:10px; flex-wrap:wrap;">
       <button class="btn yellow" id="btn-new-bank">➕ 新建词库</button>
       <button class="btn secondary" id="btn-history">📚 学习记录</button>
       <button class="btn secondary" id="btn-export">📤 备份词库</button>
       <button class="btn secondary" id="btn-import">📥 还原词库</button>
       <input type="file" id="import-file" accept=".json,application/json" style="display:none">
     </div>
+    <div id="student-btn-row" style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button class="btn secondary" id="btn-history-student">📚 学习记录</button>
+    </div>
 
     <div class="app-version" id="app-version"></div>
+    <div style="text-align:center;margin-top:6px;">
+      <button id="btn-admin-toggle" style="background:none;border:none;color:var(--ink-soft);font-size:13px;cursor:pointer;padding:4px 8px;border-radius:8px;opacity:0.55;">🔒 Admin</button>
+      <button id="btn-change-pwd" style="display:none;background:none;border:none;color:var(--ink-soft);font-size:13px;cursor:pointer;padding:4px 8px;border-radius:8px;opacity:0.55;">· 修改密码</button>
+    </div>
   </section>
 
   <section id="screen-practice" class="screen">
@@ -289,6 +296,18 @@
       <div class="modal-actions">
         <button class="btn secondary" id="modal-cancel">取消</button>
         <button class="btn" id="modal-save">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="admin-modal">
+    <div class="modal" style="max-width:320px;">
+      <h3 id="admin-modal-title">Admin 登入</h3>
+      <input type="password" id="admin-pwd-input" placeholder="密码 / Password" autocomplete="current-password" style="letter-spacing:3px;font-size:20px;text-align:center;">
+      <div id="admin-pwd-hint" style="font-size:12px;color:var(--ink-soft);margin:-8px 0 4px;text-align:center;">默认密码 / Default: 1234</div>
+      <div class="modal-actions">
+        <button class="btn secondary" id="admin-modal-cancel">取消</button>
+        <button class="btn" id="admin-modal-confirm">登入</button>
       </div>
     </div>
   </div>
@@ -359,8 +378,12 @@
     mode: 'cn',
     banks: { cn: [], en: [], ms: [] },
     editingBankId: null,
-    session: null
+    session: null,
+    adminMode: false
   };
+  const ADMIN_KEY = 'dictation_admin_v1';
+  function loadAdminPwd(){ return localStorage.getItem(ADMIN_KEY) || '1234'; }
+  function saveAdminPwd(pwd){ localStorage.setItem(ADMIN_KEY, pwd); }
 
   function defaultBanks(){
     return {
@@ -409,6 +432,45 @@
     pushBanksToCloud();   // 同步到 Firestore（db 未就绪时为空操作）
   }
 
+  // ---------- Admin ----------
+  function setAdminMode(isAdmin){
+    state.adminMode = isAdmin;
+    document.getElementById('admin-btn-row').style.display   = isAdmin ? 'flex' : 'none';
+    document.getElementById('student-btn-row').style.display = isAdmin ? 'none' : 'flex';
+    document.getElementById('btn-admin-toggle').textContent  = isAdmin ? '🔓 Admin 登出' : '🔒 Admin';
+    document.getElementById('btn-change-pwd').style.display  = isAdmin ? '' : 'none';
+    document.getElementById('opt-voice-row').style.display   = ''; // always refresh via populateVoiceSelect
+    renderBankList();
+  }
+  var adminModalMode = 'login'; // 'login' or 'change-pwd'
+  function openAdminLogin(mode){
+    adminModalMode = mode || 'login';
+    document.getElementById('admin-modal-title').textContent = mode === 'change-pwd' ? '修改密码' : 'Admin 登入';
+    document.getElementById('admin-pwd-hint').style.display  = mode === 'change-pwd' ? 'none' : '';
+    document.getElementById('admin-modal-confirm').textContent = mode === 'change-pwd' ? '保存' : '登入';
+    document.getElementById('admin-pwd-input').value = '';
+    document.getElementById('admin-modal').classList.add('active');
+    setTimeout(function(){ document.getElementById('admin-pwd-input').focus(); }, 50);
+  }
+  function closeAdminLogin(){ document.getElementById('admin-modal').classList.remove('active'); }
+  function confirmAdminLogin(){
+    var pwd = document.getElementById('admin-pwd-input').value;
+    if(adminModalMode === 'change-pwd'){
+      if(!pwd){ alert('密码不能为空'); return; }
+      saveAdminPwd(pwd);
+      closeAdminLogin();
+      alert('密码已更新 ✓');
+      return;
+    }
+    if(pwd === loadAdminPwd()){
+      closeAdminLogin();
+      setAdminMode(true);
+    } else {
+      document.getElementById('admin-pwd-input').value = '';
+      alert('密码错误');
+    }
+  }
+
   // ---------- Setup screen ----------
   function setMode(mode){
     state.mode = mode;
@@ -441,12 +503,13 @@
         '</div>' +
         '<div class="bank-actions">' +
           '<button class="start">▶️ 开始</button>' +
-          '<button class="edit">✏️ 编辑</button>' +
-          '<button class="danger">🗑️</button>' +
+          (state.adminMode ? '<button class="edit">✏️ 编辑</button><button class="danger">🗑️</button>' : '') +
         '</div>';
       card.querySelector('.start').addEventListener('click', function(){ startSession(bank.id); });
-      card.querySelector('.edit').addEventListener('click', function(){ openBankEditor(bank.id); });
-      card.querySelector('.danger').addEventListener('click', function(){ deleteBank(bank.id); });
+      if(state.adminMode){
+        card.querySelector('.edit').addEventListener('click', function(){ openBankEditor(bank.id); });
+        card.querySelector('.danger').addEventListener('click', function(){ deleteBank(bank.id); });
+      }
       els.bankList.appendChild(card);
     });
   }
@@ -811,28 +874,31 @@
            null;
   }
   function populateVoiceSelect(){
-    var voices = voicesCache.filter(function(v){ return matchesMode(v, state.mode); });
-    var sel    = document.getElementById('opt-voice');
-    var row    = document.getElementById('opt-voice-row');
+    var sel = document.getElementById('opt-voice');
+    var row = document.getElementById('opt-voice-row');
     if(!sel || !row) return;
     sel.innerHTML = '';
-    // Always show the row so the 🔍 diagnostic button is accessible
-    row.style.display = '';
-    if(voices.length === 0){
-      var opt = document.createElement('option');
-      opt.textContent = '(no matching voices found)';
-      sel.appendChild(opt);
-      return;
-    }
+    if(voicesCache.length === 0){ row.style.display = 'none'; return; }
     row.style.display = '';
     var saved = (loadVoicePrefs())[state.mode] || '';
-    voices.forEach(function(v){
+    // Show mode-matching voices first, then a divider, then the rest
+    var primary   = voicesCache.filter(function(v){ return matchesMode(v, state.mode); });
+    var secondary = voicesCache.filter(function(v){ return !matchesMode(v, state.mode); });
+    function addVoice(v){
       var opt = document.createElement('option');
       opt.value = v.name;
-      opt.textContent = v.name;
+      opt.textContent = v.name + ' (' + (v.lang||'?') + ')';
       if(v.name === saved) opt.selected = true;
       sel.appendChild(opt);
-    });
+    }
+    primary.forEach(addVoice);
+    if(secondary.length > 0){
+      var div = document.createElement('option');
+      div.disabled = true;
+      div.textContent = '── other voices ──';
+      sel.appendChild(div);
+      secondary.forEach(addVoice);
+    }
     if(!saved && sel.options.length > 0) saveVoicePref(state.mode, sel.options[0].value);
   }
   function speak(text){
@@ -1095,10 +1161,17 @@
   document.getElementById('opt-voice').addEventListener('change', function(){
     saveVoicePref(state.mode, this.value);
   });
-  document.getElementById('btn-voice-diag').addEventListener('click', function(){
-    loadVoices();
-    var lines = voicesCache.map(function(v,i){ return (i+1)+'. '+v.name+' ['+v.lang+']'; });
-    alert('All voices ('+voicesCache.length+'):\n\n' + (lines.join('\n') || '(none loaded yet)'));
+
+  // ---------- Admin wiring ----------
+  document.getElementById('btn-admin-toggle').addEventListener('click', function(){
+    if(state.adminMode){ setAdminMode(false); } else { openAdminLogin('login'); }
+  });
+  document.getElementById('btn-change-pwd').addEventListener('click', function(){ openAdminLogin('change-pwd'); });
+  document.getElementById('admin-modal-confirm').addEventListener('click', confirmAdminLogin);
+  document.getElementById('admin-modal-cancel').addEventListener('click', closeAdminLogin);
+  document.getElementById('admin-pwd-input').addEventListener('keydown', function(e){ if(e.key==='Enter') confirmAdminLogin(); });
+  document.getElementById('btn-history-student').addEventListener('click', function(){
+    renderHistory(); showScreen('history');
   });
 
   // ---------- Backup / Restore ----------
