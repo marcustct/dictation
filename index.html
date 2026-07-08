@@ -117,7 +117,20 @@
   .bank-actions{display:flex; gap:6px; flex-wrap:wrap;}
   .bank-actions button{padding:9px 12px;border-radius:10px;font-size:13px;background:#eef3f1;color:var(--ink);font-weight:700;}
   .bank-actions button.start{background:var(--teal);color:#fff;}
+  .bank-actions button.preview{background:var(--yellow);color:#fff;}
   .bank-actions button.danger{background:#fde4e1;color:var(--coral-dark);}
+
+  /* ---- study screen ---- */
+  .study-title{font-family:var(--font-display);font-size:18px;font-weight:700;flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .study-list{display:flex;flex-direction:column;gap:10px;padding-bottom:24px;}
+  .study-card{background:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 4px 12px var(--shadow);display:flex;align-items:center;gap:14px;}
+  .study-idx{font-size:13px;color:var(--ink-soft);min-width:22px;text-align:right;flex-shrink:0;}
+  .study-content{flex:1;min-width:0;}
+  .study-word{font-size:30px;font-weight:800;color:var(--ink);line-height:1.2;}
+  .study-pinyin{font-size:15px;color:var(--teal-dark);font-weight:600;letter-spacing:0.5px;margin-top:4px;}
+  .study-latin .study-word{font-size:24px;font-family:var(--font-body);}
+  .study-speak{width:46px;height:46px;border-radius:50%;background:var(--teal);color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:none;cursor:pointer;transition:background 0.15s;}
+  .study-speak:active{background:var(--teal-dark);}
 
   /* ---- modal ---- */
   .modal-overlay{position:fixed;inset:0;background:rgba(31,58,95,0.35);display:none;align-items:center;justify-content:center;padding:20px;z-index:50;}
@@ -288,6 +301,16 @@
     </div>
   </section>
 
+  <section id="screen-study" class="screen">
+    <div class="practice-header" style="margin-bottom:4px;">
+      <button class="btn-icon" id="btn-study-home" aria-label="返回首页">🏠</button>
+      <div id="study-title" class="study-title"></div>
+      <div style="width:40px;"></div>
+    </div>
+    <p class="subtitle" style="text-align:center;margin-bottom:18px;">点击 🔊 朗读，学完再开始听写</p>
+    <div id="study-list" class="study-list"></div>
+  </section>
+
   <section id="screen-history" class="screen">
     <div class="practice-header" style="margin-bottom:16px;">
       <button class="btn-icon" id="btn-hist-home" aria-label="返回首页">🏠</button>
@@ -351,10 +374,11 @@
     modalSave: document.getElementById('modal-save'),
     modalCancel: document.getElementById('modal-cancel'),
     screens: {
-      setup: document.getElementById('screen-setup'),
+      setup:    document.getElementById('screen-setup'),
       practice: document.getElementById('screen-practice'),
-      review: document.getElementById('screen-review'),
-      history: document.getElementById('screen-history')
+      review:   document.getElementById('screen-review'),
+      history:  document.getElementById('screen-history'),
+      study:    document.getElementById('screen-study')
     },
     practiceTitle: document.getElementById('practice-title'),
     btnExit: document.getElementById('btn-exit'),
@@ -542,6 +566,30 @@
     renderBankList();
   }
 
+  function openStudyMode(bankId){
+    var bank = state.banks[state.mode].find(function(b){ return b.id === bankId; });
+    if(!bank) return;
+    document.getElementById('study-title').textContent = bank.name;
+    var list = document.getElementById('study-list');
+    list.innerHTML = '';
+    var isLatin = state.mode !== 'cn';
+    bank.words.forEach(function(word, i){
+      var card = document.createElement('div');
+      card.className = 'study-card' + (isLatin ? ' study-latin' : '');
+      var pinyin = state.mode === 'cn' ? getPinyin(word) : '';
+      card.innerHTML =
+        '<div class="study-idx">' + (i + 1) + '</div>' +
+        '<div class="study-content">' +
+          '<div class="study-word">' + escapeHtml(word) + '</div>' +
+          (pinyin ? '<div class="study-pinyin">' + escapeHtml(pinyin) + '</div>' : '') +
+        '</div>' +
+        '<button class="study-speak" aria-label="朗读">🔊</button>';
+      card.querySelector('.study-speak').addEventListener('click', function(){ speak(word); });
+      list.appendChild(card);
+    });
+    showScreen('study');
+  }
+
   function renderBankList(){
     const list = state.banks[state.mode] || [];
     els.bankList.innerHTML = '';
@@ -562,9 +610,11 @@
         '</div>' +
         '<div class="bank-actions">' +
           '<button class="start">▶️ 开始</button>' +
+          '<button class="preview">📖 预习</button>' +
           (state.adminMode ? '<button class="edit">✏️ 编辑</button><button class="danger">🗑️</button>' : '') +
         '</div>';
       card.querySelector('.start').addEventListener('click', function(){ startSession(bank.id); });
+      card.querySelector('.preview').addEventListener('click', function(){ openStudyMode(bank.id); });
       if(state.adminMode){
         card.querySelector('.edit').addEventListener('click', function(){ openBankEditor(bank.id); });
         card.querySelector('.danger').addEventListener('click', function(){ deleteBank(bank.id); });
@@ -963,7 +1013,8 @@
   function speak(text){
     if(!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
-    const lang = state.session.mode === 'cn' ? 'zh-CN' : state.session.mode === 'ms' ? 'ms-MY' : 'en-US';
+    const activeMode = state.session ? state.session.mode : state.mode;
+    const lang = getLangForMode(activeMode);
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = lang;
     const v = pickVoice(lang);
@@ -1138,6 +1189,7 @@
     showScreen('history');
   });
   els.btnHistHome.addEventListener('click', function(){ showScreen('setup'); });
+  document.getElementById('btn-study-home').addEventListener('click', function(){ showScreen('setup'); });
   els.btnHistClear.addEventListener('click', function(){
     if(!confirm('确定要清除全部学习记录吗？此操作无法还原。')) return;
     saveHistory([]);
