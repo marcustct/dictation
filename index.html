@@ -381,31 +381,46 @@
     session: null,
     adminMode: false
   };
-  const ADMIN_KEY = 'dictation_admin_v1';
-  // In-memory cache — initialised from localStorage, refreshed from Firestore when online
-  let adminPwdCache = localStorage.getItem(ADMIN_KEY) || '1234';
-  function loadAdminPwd(){ return adminPwdCache; }
+  const ADMIN_KEY = 'dictation_admin_v1';  // stores SHA-256 hash, never plaintext
+  const ADMIN_SALT = 'dictation-buddy-2026';
+  // null means "no custom password set" → fall back to default '1234' check
+  let adminPwdHashCache = localStorage.getItem(ADMIN_KEY) || null;
+
+  function hashPwd(pwd){
+    var data = new TextEncoder().encode(ADMIN_SALT + ':' + pwd);
+    return crypto.subtle.digest('SHA-256', data).then(function(buf){
+      return Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+    });
+  }
+  function verifyAdminPwd(entered){
+    return hashPwd(entered).then(function(enteredHash){
+      if(adminPwdHashCache) return enteredHash === adminPwdHashCache;
+      // No custom password stored yet — check against default '1234'
+      return hashPwd('1234').then(function(defaultHash){ return enteredHash === defaultHash; });
+    });
+  }
   function saveAdminPwd(pwd){
-    adminPwdCache = pwd;
-    localStorage.setItem(ADMIN_KEY, pwd);
-    if(db){
-      db.collection('settings').doc('admin').set({ password: pwd,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp() })
-        .catch(function(e){ console.warn('Admin pwd cloud save:', e); });
-    }
+    hashPwd(pwd).then(function(hash){
+      adminPwdHashCache = hash;
+      localStorage.setItem(ADMIN_KEY, hash);
+      // Only upload hash to Firestore when admin is already authenticated
+      if(db && state.adminMode){
+        db.collection('settings').doc('admin').set({
+          pwdHash: hash,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(function(e){ console.warn('Admin pwd cloud save:', e); });
+      }
+    });
   }
   function loadAdminPwdFromCloud(){
     if(!db) return;
+    // Only read the hash — never write from an unauthenticated context
     db.collection('settings').doc('admin').get().then(function(snap){
-      if(snap.exists && snap.data().password){
-        adminPwdCache = snap.data().password;
-        localStorage.setItem(ADMIN_KEY, adminPwdCache);
-      } else {
-        // First run — push the local password to cloud so all devices share it
-        db.collection('settings').doc('admin').set({ password: adminPwdCache,
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp() })
-          .catch(function(e){ console.warn('Admin pwd init:', e); });
+      if(snap.exists && snap.data().pwdHash){
+        adminPwdHashCache = snap.data().pwdHash;
+        localStorage.setItem(ADMIN_KEY, adminPwdHashCache);
       }
+      // No else: if no cloud hash exists, local default ('1234') stays in effect
     }).catch(function(e){ console.warn('Admin pwd cloud load:', e); });
   }
 
@@ -479,20 +494,22 @@
   function closeAdminLogin(){ document.getElementById('admin-modal').classList.remove('active'); }
   function confirmAdminLogin(){
     var pwd = document.getElementById('admin-pwd-input').value;
+    if(!pwd) return;
     if(adminModalMode === 'change-pwd'){
-      if(!pwd){ alert('密码不能为空'); return; }
       saveAdminPwd(pwd);
       closeAdminLogin();
       alert('密码已更新 ✓');
       return;
     }
-    if(pwd === loadAdminPwd()){
-      closeAdminLogin();
-      setAdminMode(true);
-    } else {
-      document.getElementById('admin-pwd-input').value = '';
-      alert('密码错误');
-    }
+    verifyAdminPwd(pwd).then(function(ok){
+      if(ok){
+        closeAdminLogin();
+        setAdminMode(true);
+      } else {
+        document.getElementById('admin-pwd-input').value = '';
+        alert('密码错误');
+      }
+    });
   }
 
   // ---------- Setup screen ----------
