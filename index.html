@@ -740,6 +740,7 @@
   let curCssW = 0, curCssH = 0;   // 当前画布 CSS 尺寸,旋转时用于缩放已写笔迹
   let penDetected = false;   // 一旦检测到 Apple Pencil,画布将忽略手指/手掌触摸
   let activeTouchIds = new Set(); // 追踪所有活跃 touch pointer，笔落下时统一释放
+  let pressureEma = 0.5; // 指数移动平均压力：防止用力时线宽突变导致断笔
 
   function shouldRejectPointer(e){
     if(e.pointerType === 'pen'){ penDetected = true; return false; }
@@ -880,7 +881,10 @@
   }
 
   // ---- 笔迹渲染:二次贝塞尔平滑(中/英/马来文共用) ----
-  function strokeWidth(p){ return 2.4 + ((p && p.p) || 0.5) * 4; }
+  function strokeWidth(p){
+    var pr = Math.max(0.15, Math.min(0.85, (p && p.p) || 0.5));
+    return 2.0 + pr * 4.5;
+  }
   function mid(a, b){ return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
   function inkStart(w){
     ctx.lineWidth = w; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = COLOR.ink;
@@ -936,7 +940,10 @@
 
   function getPos(e){
     const rect = els.canvas.getBoundingClientRect();
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top, p: e.pressure > 0 ? e.pressure : 0.5 };
+    var raw = e.pressure > 0 ? e.pressure : 0.5;
+    // EMA 平滑：α=0.3 让压力缓慢跟随实际值，消除突变
+    pressureEma = pressureEma * 0.7 + raw * 0.3;
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top, p: pressureEma };
   }
 
   els.canvas.addEventListener('pointerdown', function(e){
@@ -958,6 +965,7 @@
     activePointerId = e.pointerId;
     try{ els.canvas.setPointerCapture(e.pointerId); }catch(err){}
     isDrawing = true;
+    pressureEma = 0.5; // 每笔划重置 EMA，避免残留压力影响起笔线宽
     currentStroke = [getPos(e)];
     strokes.push(currentStroke);
   });
