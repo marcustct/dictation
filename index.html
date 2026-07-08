@@ -382,8 +382,32 @@
     adminMode: false
   };
   const ADMIN_KEY = 'dictation_admin_v1';
-  function loadAdminPwd(){ return localStorage.getItem(ADMIN_KEY) || '1234'; }
-  function saveAdminPwd(pwd){ localStorage.setItem(ADMIN_KEY, pwd); }
+  // In-memory cache — initialised from localStorage, refreshed from Firestore when online
+  let adminPwdCache = localStorage.getItem(ADMIN_KEY) || '1234';
+  function loadAdminPwd(){ return adminPwdCache; }
+  function saveAdminPwd(pwd){
+    adminPwdCache = pwd;
+    localStorage.setItem(ADMIN_KEY, pwd);
+    if(db){
+      db.collection('settings').doc('admin').set({ password: pwd,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp() })
+        .catch(function(e){ console.warn('Admin pwd cloud save:', e); });
+    }
+  }
+  function loadAdminPwdFromCloud(){
+    if(!db) return;
+    db.collection('settings').doc('admin').get().then(function(snap){
+      if(snap.exists && snap.data().password){
+        adminPwdCache = snap.data().password;
+        localStorage.setItem(ADMIN_KEY, adminPwdCache);
+      } else {
+        // First run — push the local password to cloud so all devices share it
+        db.collection('settings').doc('admin').set({ password: adminPwdCache,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp() })
+          .catch(function(e){ console.warn('Admin pwd init:', e); });
+      }
+    }).catch(function(e){ console.warn('Admin pwd cloud load:', e); });
+  }
 
   function defaultBanks(){
     return {
@@ -1355,6 +1379,7 @@
       if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
       db = firebase.firestore();
       startBanksListener();
+      loadAdminPwdFromCloud();
     }catch(e){ console.warn('Firebase init:', e); syncStatus('offline'); }
   }
 
