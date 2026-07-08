@@ -1,3 +1,15 @@
+Version: 0.7
+Date: 2026-07-08
+Notes: - Admin / student mode: password-protected admin login (🔒 button).
+         Students see Start only; admin sees full word bank management.
+         Password hashed with SHA-256 (SubtleCrypto), synced via Firestore.
+       - Voice selector: choose any system TTS voice per language mode.
+         All voices listed (fixes Han Premium detection on iOS).
+       - Non-comic Nunito font replaces Chalkboard SE on all headings.
+       - Print fix: display-based CSS; iOS Safari opens Blob popup for printing.
+       - Review screen shows session date/time in print output.
+       - Hint text doubled to 64 px for easier reading.
+
 Version: 0.5
 Date: 2026-07-07
 Notes: - Malay (Bahasa Malaysia) mode: 3rd tab, ms-MY speech, four-line

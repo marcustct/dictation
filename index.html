@@ -383,8 +383,15 @@
   };
   const ADMIN_KEY = 'dictation_admin_v1';  // stores SHA-256 hash, never plaintext
   const ADMIN_SALT = 'dictation-buddy-2026';
-  // null means "no custom password set" → fall back to default '1234' check
-  let adminPwdHashCache = localStorage.getItem(ADMIN_KEY) || null;
+  // Only treat localStorage value as a hash if it looks like one (64 hex chars).
+  // Old code stored plaintext there — silently discard it so login falls back to '1234'.
+  function isHexHash(s){ return typeof s === 'string' && /^[0-9a-f]{64}$/.test(s); }
+  (function migrateLegacyPwd(){
+    var stored = localStorage.getItem(ADMIN_KEY);
+    if(stored && !isHexHash(stored)){ localStorage.removeItem(ADMIN_KEY); }
+  })();
+  let adminPwdHashCache = isHexHash(localStorage.getItem(ADMIN_KEY))
+    ? localStorage.getItem(ADMIN_KEY) : null;
 
   function hashPwd(pwd){
     var data = new TextEncoder().encode(ADMIN_SALT + ':' + pwd);
@@ -1288,7 +1295,7 @@
   window.addEventListener('orientationchange', function(){ scheduleViewportChange(300); });
 
   // 应用版本号(同时更新 version.txt / sw.js 的 CACHE)
-  const APP_VERSION = '0.5';
+  const APP_VERSION = '0.7';
   els.appVersion.innerHTML = '版本 v' + APP_VERSION +
     '&nbsp;&nbsp;<span id="sync-status" class="sync-badge offline">📴 本地模式</span>';
 
