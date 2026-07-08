@@ -14,7 +14,7 @@
 <link rel="icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=Ma+Shan+Zheng&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=Noto+Serif+SC:wght@500&display=swap">
 <title>听写小助手 · Dictation Buddy</title>
 <style>
   :root{
@@ -36,8 +36,8 @@
     --shadow:rgba(31,58,95,0.16);
     --radius:20px;
     --font-display:"Nunito","Helvetica Neue",Arial,sans-serif;
-    --font-body:"STKaiti","KaiTi","Kaiti SC","楷体","Ma Shan Zheng",-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",Arial,sans-serif;
-    --font-kai:"STKaiti","KaiTi","Kaiti SC","楷体","Ma Shan Zheng",cursive;
+    --font-body:"Noto Serif SC",-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",Arial,sans-serif;
+    --font-kai:"Noto Serif SC","STKaiti","KaiTi","Kaiti SC","楷体",serif;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;height:100%;}
@@ -129,7 +129,7 @@
   .study-card{background:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 4px 12px var(--shadow);display:flex;align-items:center;gap:14px;}
   .study-idx{font-size:13px;color:var(--ink-soft);min-width:22px;text-align:right;flex-shrink:0;}
   .study-content{flex:1;min-width:0;}
-  .study-word{font-size:30px;font-weight:400;color:var(--ink);line-height:1.2;font-family:var(--font-kai);}
+  .study-word{font-size:30px;font-weight:500;color:var(--ink);line-height:1.2;font-family:var(--font-kai);}
   .study-pinyin{font-size:22px;color:var(--teal-dark);font-weight:600;letter-spacing:0.5px;margin-top:6px;font-family:var(--font-display);}
   .study-latin .study-word{font-size:24px;font-family:var(--font-body);font-weight:700;}
   /* flashcard mode */
@@ -174,7 +174,7 @@
   .spiral span{width:14px;height:14px;border-radius:50%;background:var(--paper-deep);box-shadow:inset 0 0 0 3px var(--card), 0 1px 2px rgba(0,0,0,0.15);}
   canvas{width:100%; height:260px; display:block; touch-action:none; border-radius:8px;}
 
-  .reveal-word{text-align:center;font-family:var(--font-kai);font-size:64px;color:var(--ink-soft);min-height:100px;margin-top:8px;line-height:1.15;}
+  .reveal-word{text-align:center;font-family:var(--font-kai);font-size:64px;font-weight:500;color:var(--ink-soft);min-height:100px;margin-top:8px;line-height:1.15;}
   .reveal-word.hidden-text{visibility:hidden;}
   .reveal-word.latin-mode{font-family:var(--font-body);font-weight:700;letter-spacing:0.5px;}
   .reveal-word .reveal-pinyin{display:block;font-family:var(--font-display);font-weight:600;font-size:38px;color:var(--teal-dark);letter-spacing:0.5px;margin-bottom:4px;}
@@ -190,7 +190,7 @@
   .review-card .idx{position:absolute;top:8px;left:12px;font-family:var(--font-display);color:var(--ink-soft);font-size:14px;}
   .review-card img{width:100%;border-radius:10px;background:var(--paper);border:1px solid var(--line-soft);display:block;margin:4px 0 8px;}
   .review-word{font-weight:800;font-size:18px;text-align:center;margin:22px 0 8px;}
-  .review-word.cn-word{font-family:var(--font-kai);font-weight:400;font-size:22px;}
+  .review-word.cn-word{font-family:var(--font-kai);font-weight:500;font-size:22px;}
   .review-word .review-pinyin{display:block;font-weight:600;font-size:18px;color:var(--teal-dark);letter-spacing:0.5px;margin-top:2px;font-family:var(--font-display);}
   .stamp{position:absolute;top:2px;right:8px;font-size:28px;transform:rotate(-10deg);display:none;}
   .stamp.correct{color:var(--green);}
