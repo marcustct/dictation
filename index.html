@@ -136,10 +136,16 @@
   .study-list.flashcard-mode .study-pinyin{filter:blur(5px);cursor:pointer;transition:filter 0.2s;user-select:none;-webkit-user-select:none;}
   .study-list.flashcard-mode .study-card.revealed .study-pinyin{filter:none;}
   /* flashcard mode — MS pair: blur Malay word */
-  .study-trans{font-size:20px;font-weight:700;color:var(--ink);font-family:var(--font-display);line-height:1.3;}
-  .study-ms-pair .study-word{font-size:16px;font-weight:600;color:var(--teal-dark);margin-top:4px;font-family:var(--font-display);transition:filter 0.2s;cursor:pointer;user-select:none;-webkit-user-select:none;}
+  .study-ms-row{display:flex;align-items:center;gap:8px;}
+  .study-trans{font-size:20px;font-weight:700;color:var(--ink);font-family:var(--font-display);line-height:1.3;flex:1;}
+  .study-ms-pair .study-word{font-size:16px;font-weight:600;color:var(--teal-dark);margin-top:2px;font-family:var(--font-display);transition:filter 0.2s;cursor:pointer;user-select:none;-webkit-user-select:none;flex:1;}
   .study-list.flashcard-mode .study-ms-pair .study-word{filter:blur(5px);}
   .study-list.flashcard-mode .study-ms-pair.revealed .study-word{filter:none;}
+  .study-speak-sm{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;border:none;cursor:pointer;transition:background 0.15s;}
+  .study-speak-sm.cn{background:#e8f4f5;color:var(--teal-dark);}
+  .study-speak-sm.cn:active{background:var(--teal);color:#fff;}
+  .study-speak-sm.ms{background:#eef3f1;color:var(--ink-soft);}
+  .study-speak-sm.ms:active{background:var(--teal-dark);color:#fff;}
   /* reveal card MS cue */
   .reveal-ms-cue{display:block;font-size:24px;color:var(--teal-dark);font-family:var(--font-display);font-weight:600;margin-bottom:6px;}
   .reveal-ms-word{display:block;font-size:52px;font-weight:700;font-family:var(--font-display);color:var(--ink-soft);line-height:1.2;}
@@ -611,21 +617,30 @@
     bank.words.forEach(function(word, i){
       var card = document.createElement('div');
       if(bankHasPairs){
-        // MS pair card: show Chinese (cue), Malay is hidden in flashcard mode
+        // MS pair card: Chinese row + Malay row, each with its own 🔊 button
         var trans = getMsTrans(word);
         var msw  = getMsWord(word);
         card.className = 'study-card study-ms-pair';
         card.innerHTML =
           '<div class="study-idx">' + (i + 1) + '</div>' +
           '<div class="study-content">' +
-            '<div class="study-trans">' + escapeHtml(trans || msw) + '</div>' +
-            (trans ? '<div class="study-word">' + escapeHtml(msw) + '</div>' : '') +
-          '</div>' +
-          '<button class="study-speak" aria-label="朗读">🔊</button>';
-        card.querySelector('.study-speak').addEventListener('click', function(){
-          speakWithLang(trans || msw, trans ? 'zh-CN' : 'ms-MY');
-        });
+            '<div class="study-ms-row">' +
+              '<div class="study-trans">' + escapeHtml(trans || msw) + '</div>' +
+              (trans ? '<button class="study-speak-sm cn" aria-label="播放华文">🔊</button>' : '') +
+            '</div>' +
+            (trans ?
+              '<div class="study-ms-row" style="margin-top:4px;">' +
+                '<div class="study-word">' + escapeHtml(msw) + '</div>' +
+                '<button class="study-speak-sm ms" aria-label="播放马来文">🔊</button>' +
+              '</div>' : '') +
+          '</div>';
         if(trans){
+          card.querySelector('.study-speak-sm.cn').addEventListener('click', function(){
+            speakWithLang(trans, 'zh-CN');
+          });
+          card.querySelector('.study-speak-sm.ms').addEventListener('click', function(){
+            speakWithLang(msw, 'ms-MY');
+          });
           card.querySelector('.study-word').addEventListener('click', function(){
             card.classList.toggle('revealed');
           });
