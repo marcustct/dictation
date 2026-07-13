@@ -501,12 +501,24 @@
   function getMsWord(e){ return e.split('|')[0].trim(); }
   function getMsTrans(e){ var p = e.split('|'); return p.length > 1 ? p.slice(1).join('|').trim() : ''; }
   function hasMsTrans(e){ return getMsTrans(e) !== ''; }
+  function langToMode(lang){
+    var l = lang.toLowerCase();
+    if(l.indexOf('zh') === 0 || l.indexOf('cmn') === 0) return 'cn';
+    if(l.indexOf('ms') === 0 || l.indexOf('id') === 0) return 'ms';
+    return 'en';
+  }
   function speakWithLang(text, lang){
     if(!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
     var utter = new SpeechSynthesisUtterance(text);
     utter.lang = lang;
-    var v = pickVoice(lang);
+    // Derive the correct mode from lang so we use the right voice prefs & prefixes
+    var targetMode = langToMode(lang);
+    var prefs = loadVoicePrefs();
+    var saved = prefs[targetMode];
+    var v = null;
+    if(saved) v = voicesCache.find(function(v){ return v.name === saved; });
+    if(!v)    v = voicesCache.find(function(v){ return matchesMode(v, targetMode); });
     if(v) utter.voice = v;
     utter.rate = els.optSlow.checked ? 0.55 : 0.85;
     window.speechSynthesis.speak(utter);
