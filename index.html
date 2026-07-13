@@ -132,9 +132,17 @@
   .study-word{font-size:30px;font-weight:500;color:var(--ink);line-height:1.2;font-family:var(--font-kai);}
   .study-pinyin{font-size:22px;color:var(--teal-dark);font-weight:600;letter-spacing:0.5px;margin-top:6px;font-family:var(--font-display);}
   .study-latin .study-word{font-size:24px;font-family:var(--font-body);font-weight:700;}
-  /* flashcard mode */
+  /* flashcard mode — CN: blur pinyin */
   .study-list.flashcard-mode .study-pinyin{filter:blur(5px);cursor:pointer;transition:filter 0.2s;user-select:none;-webkit-user-select:none;}
   .study-list.flashcard-mode .study-card.revealed .study-pinyin{filter:none;}
+  /* flashcard mode — MS pair: blur Malay word */
+  .study-trans{font-size:20px;font-weight:700;color:var(--ink);font-family:var(--font-display);line-height:1.3;}
+  .study-ms-pair .study-word{font-size:16px;font-weight:600;color:var(--teal-dark);margin-top:4px;font-family:var(--font-display);transition:filter 0.2s;cursor:pointer;user-select:none;-webkit-user-select:none;}
+  .study-list.flashcard-mode .study-ms-pair .study-word{filter:blur(5px);}
+  .study-list.flashcard-mode .study-ms-pair.revealed .study-word{filter:none;}
+  /* reveal card MS cue */
+  .reveal-ms-cue{display:block;font-size:24px;color:var(--teal-dark);font-family:var(--font-display);font-weight:600;margin-bottom:6px;}
+  .reveal-ms-word{display:block;font-size:52px;font-weight:700;font-family:var(--font-display);color:var(--ink-soft);line-height:1.2;}
   .study-speak{width:46px;height:46px;border-radius:50%;background:var(--teal);color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:none;cursor:pointer;transition:background 0.15s;}
   .study-speak:active{background:var(--teal-dark);}
 
@@ -483,6 +491,21 @@
 
   function uid(){ return 'b' + Date.now() + Math.floor(Math.random()*1000); }
 
+  // ---- 马来文词库：支持「马来文|中文」双栏格式 ----
+  function getMsWord(e){ return e.split('|')[0].trim(); }
+  function getMsTrans(e){ var p = e.split('|'); return p.length > 1 ? p.slice(1).join('|').trim() : ''; }
+  function hasMsTrans(e){ return getMsTrans(e) !== ''; }
+  function speakWithLang(text, lang){
+    if(!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    var utter = new SpeechSynthesisUtterance(text);
+    utter.lang = lang;
+    var v = pickVoice(lang);
+    if(v) utter.voice = v;
+    utter.rate = els.optSlow.checked ? 0.55 : 0.85;
+    window.speechSynthesis.speak(utter);
+  }
+
   // 用 pinyin-pro 生成带声调的汉语拼音;库未加载时安全返回空串
   function getPinyin(text){
     if(typeof pinyinPro === 'undefined' || !pinyinPro.pinyin) return '';
@@ -579,31 +602,64 @@
     document.getElementById('study-title').textContent = bank.name;
     var list = document.getElementById('study-list');
     list.innerHTML = '';
-    var isLatin = state.mode !== 'cn';
+    var isCn = state.mode === 'cn';
+    var isMs = state.mode === 'ms';
+    // detect if this MS bank uses the malay|chinese pair format
+    var bankHasPairs = isMs && bank.words.some(function(w){ return hasMsTrans(w); });
+    list.dataset.flashcardType = bankHasPairs ? 'ms' : (isCn ? 'cn' : 'none');
+
     bank.words.forEach(function(word, i){
       var card = document.createElement('div');
-      card.className = 'study-card' + (isLatin ? ' study-latin' : '');
-      var pinyin = state.mode === 'cn' ? getPinyin(word) : '';
-      card.innerHTML =
-        '<div class="study-idx">' + (i + 1) + '</div>' +
-        '<div class="study-content">' +
-          '<div class="study-word">' + escapeHtml(word) + '</div>' +
-          (pinyin ? '<div class="study-pinyin">' + escapeHtml(pinyin) + '</div>' : '') +
-        '</div>' +
-        '<button class="study-speak" aria-label="朗读">🔊</button>';
-      card.querySelector('.study-speak').addEventListener('click', function(){ speak(word); });
-      if(pinyin){
-        card.querySelector('.study-pinyin').addEventListener('click', function(){
-          card.classList.toggle('revealed');
+      if(bankHasPairs){
+        // MS pair card: show Chinese (cue), Malay is hidden in flashcard mode
+        var trans = getMsTrans(word);
+        var msw  = getMsWord(word);
+        card.className = 'study-card study-ms-pair';
+        card.innerHTML =
+          '<div class="study-idx">' + (i + 1) + '</div>' +
+          '<div class="study-content">' +
+            '<div class="study-trans">' + escapeHtml(trans || msw) + '</div>' +
+            (trans ? '<div class="study-word">' + escapeHtml(msw) + '</div>' : '') +
+          '</div>' +
+          '<button class="study-speak" aria-label="朗读">🔊</button>';
+        card.querySelector('.study-speak').addEventListener('click', function(){
+          speakWithLang(trans || msw, trans ? 'zh-CN' : 'ms-MY');
         });
+        if(trans){
+          card.querySelector('.study-word').addEventListener('click', function(){
+            card.classList.toggle('revealed');
+          });
+        }
+      } else {
+        // CN / EN / MS plain card
+        card.className = 'study-card' + (isCn ? '' : ' study-latin');
+        var pinyin = isCn ? getPinyin(word) : '';
+        card.innerHTML =
+          '<div class="study-idx">' + (i + 1) + '</div>' +
+          '<div class="study-content">' +
+            '<div class="study-word">' + escapeHtml(word) + '</div>' +
+            (pinyin ? '<div class="study-pinyin">' + escapeHtml(pinyin) + '</div>' : '') +
+          '</div>' +
+          '<button class="study-speak" aria-label="朗读">🔊</button>';
+        card.querySelector('.study-speak').addEventListener('click', function(){ speak(word); });
+        if(pinyin){
+          card.querySelector('.study-pinyin').addEventListener('click', function(){
+            card.classList.toggle('revealed');
+          });
+        }
       }
       list.appendChild(card);
     });
-    // reset flashcard toggle each time study page opens
+
+    // reset flashcard toggle
     list.classList.remove('flashcard-mode');
     var fb = document.getElementById('btn-flashcard');
-    if(fb) fb.textContent = '🙈 遮拼音';
-    document.getElementById('study-hint').textContent = '点击 🔊 朗读，学完再开始听写';
+    if(fb){
+      fb.style.display = (bankHasPairs || isCn) ? '' : 'none';
+      fb.textContent = bankHasPairs ? '🙈 遮马来文' : '🙈 遮拼音';
+    }
+    document.getElementById('study-hint').textContent =
+      bankHasPairs ? '看中文，用马来文写出词语，点 🔊 听中文朗读' : '点击 🔊 朗读，学完再开始听写';
     showScreen('study');
   }
 
@@ -642,6 +698,7 @@
 
   function openBankEditor(bankId){
     state.editingBankId = bankId;
+    var isMsMode = state.mode === 'ms';
     if(bankId){
       const bank = state.banks[state.mode].find(function(b){ return b.id === bankId; });
       els.modalTitle.textContent = '编辑词库';
@@ -652,6 +709,9 @@
       els.modalName.value = '';
       els.modalWords.value = '';
     }
+    els.modalWords.placeholder = isMsMode
+      ? '每行格式: 马来文|中文翻译\n例如:\nmemastikan|确保\nberbahaya|危险\nbersabar|有耐心'
+      : '每行输入一个词语,或用逗号分隔\n例如:\n苹果\n香蕉\n图书馆';
     els.modalOverlay.classList.add('active');
     setTimeout(function(){ els.modalName.focus(); }, 50);
   }
@@ -661,7 +721,9 @@
   }
   function saveBankEditor(){
     const name = els.modalName.value.trim();
-    const words = els.modalWords.value.split(/[\n,，、]+/).map(function(w){ return w.trim(); }).filter(Boolean);
+    // MS mode: split on newlines only (| is the within-entry separator for malay|chinese)
+    var splitRe = state.mode === 'ms' ? /\n+/ : /[\n,，、]+/;
+    const words = els.modalWords.value.split(splitRe).map(function(w){ return w.trim(); }).filter(Boolean);
     if(!name){ alert('请输入词库名称'); return; }
     if(words.length === 0){ alert('请至少输入一个词语'); return; }
     if(state.editingBankId){
@@ -761,19 +823,26 @@
 
   function loadQuestion(index){
     const word = state.session.words[index];
-    const isCn = state.session.mode === 'cn';
+    const mode = state.session.mode;
+    const isCn = mode === 'cn';
+    const isMsPair = mode === 'ms' && hasMsTrans(word);
     els.revealWord.classList.toggle('latin-mode', !isCn);
     if(isCn){
       const py = getPinyin(word);
       els.revealWord.innerHTML =
         (py ? '<span class="reveal-pinyin">' + escapeHtml(py) + '</span>' : '') +
         '<span class="reveal-hanzi">' + escapeHtml(word) + '</span>';
+    } else if(isMsPair){
+      // Reveal: Malay word (big) + Chinese cue (small reference)
+      els.revealWord.innerHTML =
+        '<span class="reveal-ms-cue">' + escapeHtml(getMsTrans(word)) + '</span>' +
+        '<span class="reveal-ms-word">' + escapeHtml(getMsWord(word)) + '</span>';
     } else {
-      els.revealWord.textContent = word;
+      els.revealWord.textContent = getMsWord(word) || word;
     }
     els.revealWord.classList.add('hidden-text');
     strokes = [];
-    setupCanvas(word);
+    setupCanvas(isMsPair ? getMsWord(word) : word);
     speakCurrent();
     updateNextButtonLabel();
   }
@@ -1068,7 +1137,15 @@
     utter.rate = els.optSlow.checked ? 0.55 : 0.85;
     window.speechSynthesis.speak(utter);
   }
-  function speakCurrent(){ speak(state.session.words[state.session.current]); }
+  function speakCurrent(){
+    var word = state.session.words[state.session.current];
+    var mode = state.session.mode;
+    if(mode === 'ms' && hasMsTrans(word)){
+      speakWithLang(getMsTrans(word), 'zh-CN'); // 老师念中文，学生写马来文
+    } else {
+      speak(mode === 'ms' ? getMsWord(word) : word);
+    }
+  }
 
   // ---------- Practice controls ----------
   els.btnSpeak.addEventListener('click', speakCurrent);
@@ -1239,13 +1316,20 @@
 
   document.getElementById('btn-flashcard').addEventListener('click', function(){
     var list = document.getElementById('study-list');
+    var type = list.dataset.flashcardType || 'cn';
     var on = list.classList.toggle('flashcard-mode');
-    this.textContent = on ? '👁 显示拼音' : '🙈 遮拼音';
-    document.getElementById('study-hint').textContent = on
-      ? '点击拼音区域可以翻开查看'
-      : '点击 🔊 朗读，学完再开始听写';
+    if(type === 'ms'){
+      this.textContent = on ? '👁 显示马来文' : '🙈 遮马来文';
+      document.getElementById('study-hint').textContent = on
+        ? '点击马来文可以翻开查看'
+        : '看中文，用马来文写出词语，点 🔊 听中文朗读';
+    } else {
+      this.textContent = on ? '👁 显示拼音' : '🙈 遮拼音';
+      document.getElementById('study-hint').textContent = on
+        ? '点击拼音区域可以翻开查看'
+        : '点击 🔊 朗读，学完再开始听写';
+    }
     if(!on){
-      // reveal all when turning off
       list.querySelectorAll('.study-card.revealed').forEach(function(c){ c.classList.remove('revealed'); });
     }
   });
